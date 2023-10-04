@@ -2,8 +2,11 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use Expression::*;
+use Expression::{And, Constant, Literal, Not, Or};
 
+pub mod traits;
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Expression<T>
 where
     T: Debug + Clone + Eq + Hash,
@@ -67,6 +70,82 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
             And(ref values) => values.iter().all(|e| e.evaluate(literal_values)),
             Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
             Not(ref x) => !x.evaluate(literal_values),
+        }
+    }
+
+    // toNNF (Not (Bin And     l r)) = Bin Or  (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∧ ψ) = ¬ϕ ∨ ¬ψ
+    // toNNF (Not (Bin Or      l r)) = Bin And (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∨ ψ) = ¬ϕ ∧ ¬ψ
+    // toNNF (Bin op      l r)       = Bin op  (toNNF l)       (toNNF r)
+    // toNNF (Not (Not exp))         = toNNF exp
+    // toNNF (Not exp)               = Not (toNNF exp)
+    // toNNF leaf                    = leaf
+    pub fn to_nnf(self) -> Self {
+        match self {
+            Not(inner) => match *inner {
+                And(expressions) => Or(expressions
+                    .into_iter()
+                    .map(|e| Box::new(Not(e).to_nnf()))
+                    .collect()),
+                Or(expressions) => And(expressions
+                    .into_iter()
+                    .map(|e| Box::new(Not(e).to_nnf()))
+                    .collect()),
+                Not(expression) => expression.to_nnf(),
+                expression => Expression::negate(expression.to_nnf()),
+            },
+            And(expressions) => And(expressions
+                .into_iter()
+                .map(|e| Box::new(e.to_nnf()))
+                .collect()),
+            Or(expressions) => Or(expressions
+                .into_iter()
+                .map(|e| Box::new(e.to_nnf()))
+                .collect()),
+            leaf => leaf,
+        }
+    }
+
+    // let rec cnfc (phi: formula_wi) : formula_wi
+    // = match phi with
+    // | FOr_wi phi1 phi2 → distr (cnfc phi1) (cnfc phi2)
+    // | FAnd_wi phi1 phi2 → FAnd_wi (cnfc phi1) (cnfc phi2)
+    // | phi → phi
+    // end
+    pub fn to_cnf(self) -> Self {
+        let nnf = self.to_nnf();
+
+        match nnf {
+            Or(expressions) => expressions
+                .into_iter()
+                .map(|e| e.to_cnf())
+                // .rev()
+                .reduce(|acc, e| Expression::distribute(acc, e))
+                .unwrap(),
+            And(expressions) => And(expressions
+                .into_iter()
+                .map(|e| Box::new(e.to_cnf()))
+                .collect()),
+            expression => expression,
+        }
+    }
+
+    // let rec distr (phi1 phi2: formula_wi) : formula_wi
+    // = match phi1, phi2 with
+    // | FAnd_wi and1 and2, phi2 → FAnd_wi (distr and1 phi2) (distr and2 phi2)
+    // | phi1, FAnd_wi and1 and2 → FAnd_wi (distr phi1 and1) (distr phi1 and2)
+    // | phi1,phi2 → FOr_wi phi1 phi2
+    // end
+    fn distribute(first: Self, other: Self) -> Self {
+        match (first, other) {
+            (And(expressions), other) => And(expressions
+                .into_iter()
+                .map(|e| Box::new(Expression::distribute(*e, other.clone())))
+                .collect()),
+            (other, And(expressions)) => And(expressions
+                .into_iter()
+                .map(|e| Box::new(Expression::distribute(other.clone(), *e)))
+                .collect()),
+            (expression1, expression2) => Expression::binary_or(expression1, expression2),
         }
     }
 }

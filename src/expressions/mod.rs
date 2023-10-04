@@ -273,4 +273,69 @@ mod tests {
         assert!(expected.semantic_eq(&actual));
         assert!(actual.is_cnf());
     }
+
+    #[test]
+    fn to_cnf_n_ary_2() {
+        let input = Expression::n_ary_or(vec![
+            Literal("e1"),
+            Literal("e2"),
+            Literal("e3"),
+            Literal("e4"),
+            Literal("e5"),
+            Expression::n_ary_and(vec![
+                Literal("c1"),
+                Literal("c2"),
+                Literal("c3"),
+                Literal("c4"),
+                Literal("c5"),
+            ]),
+        ]);
+
+        let expected = Expression::n_ary_and(vec![
+            Expression::n_ary_or(vec![
+                Literal("e1"),
+                Literal("e2"),
+                Literal("e3"),
+                Literal("e4"),
+                Literal("e5"),
+                Literal("c1"),
+            ]),
+            Expression::n_ary_or(vec![
+                Literal("e1"),
+                Literal("e2"),
+                Literal("e3"),
+                Literal("e4"),
+                Literal("e5"),
+                Literal("c2"),
+            ]),
+            Expression::n_ary_or(vec![
+                Literal("e1"),
+                Literal("e2"),
+                Literal("e3"),
+                Literal("e4"),
+                Literal("e5"),
+                Literal("c3"),
+            ]),
+            Expression::n_ary_or(vec![
+                Literal("e1"),
+                Literal("e2"),
+                Literal("e3"),
+                Literal("e4"),
+                Literal("e5"),
+                Literal("c4"),
+            ]),
+            Expression::n_ary_or(vec![
+                Literal("e1"),
+                Literal("e2"),
+                Literal("e3"),
+                Literal("e4"),
+                Literal("e5"),
+                Literal("c5"),
+            ]),
+        ]);
+        let actual = input.to_cnf();
+
+        assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_cnf());
+    }
 }

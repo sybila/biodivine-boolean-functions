@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::Deref;
 
 use Expression::{And, Constant, Literal, Not, Or};
 
@@ -138,6 +138,16 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
             (expression1, expression2) => Expression::binary_or(expression1, expression2),
         }
     }
+
+    pub fn is_cnf(&self) -> bool {
+        match self {
+            Literal(_) => true,
+            Constant(_) => false,
+            Not(ref inner) => matches!(inner.deref(), Literal(_)),
+            And(es) => es.iter().all(|e| e.is_cnf()),
+            Or(es) => !es.iter().any(|e| e.is_and()) && es.iter().all(|e| e.is_cnf()),
+        }
+    }
 }
 
 mod tests {
@@ -240,7 +250,8 @@ mod tests {
         );
         let actual = input.to_cnf();
 
-        assert_eq!(expected, actual)
+        assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_cnf());
     }
 
     #[test]
@@ -257,6 +268,7 @@ mod tests {
         );
         let actual = input.to_cnf();
 
-        assert!(expected.semantic_eq(&actual))
+        assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_cnf());
     }
 }

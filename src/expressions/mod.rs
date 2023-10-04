@@ -139,3 +139,124 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         }
     }
 }
+
+mod tests {
+    use crate::expressions::Expression::{self, Literal};
+    use crate::traits::SemanticEq;
+
+    #[test]
+    fn test_to_nnf_1() {
+        // (Not notA) ∨ (Not (notB ∨ vC)), vA ∨ (vB ∧ notC)
+        let input = Expression::binary_or(
+            Expression::negate(Expression::negate(Literal("a"))),
+            Expression::negate(Expression::binary_or(
+                Expression::negate(Literal("b")),
+                Literal("c"),
+            )),
+        );
+
+        let expected = Expression::binary_or(
+            Literal("a"),
+            Expression::binary_and(Literal("b"), Expression::negate(Literal("c"))),
+        );
+        let actual = input.to_nnf();
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test_to_nnf_2() {
+        // Not (vA ∨ (notD ∨ Not (notA ∨ Not notB))), notA ∧ (vD ∧ (notA ∨ vB))
+        let input = Expression::negate(Expression::binary_or(
+            Literal("a"),
+            Expression::binary_or(
+                Expression::negate(Literal("d")),
+                Expression::negate(Expression::binary_or(
+                    Expression::negate(Literal("a")),
+                    Expression::negate(Expression::negate(Literal("b"))),
+                )),
+            ),
+        ));
+
+        let expected = Expression::binary_and(
+            Expression::negate(Literal("a")),
+            Expression::binary_and(
+                Literal("d"),
+                Expression::binary_or(Expression::negate(Literal("a")), Literal("b")),
+            ),
+        );
+        let actual = input.to_nnf();
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test_to_nnn_3() {
+        // Not (notA ∨ vB) ∨ Not (vB ∧ notC), (vA ∧ notB) ∨ (notB ∨ vC)
+        let input = Expression::binary_or(
+            Expression::negate(Expression::binary_or(
+                Expression::negate(Literal("a")),
+                Literal("b"),
+            )),
+            Expression::negate(Expression::binary_and(
+                Literal("b"),
+                Expression::negate(Literal("c")),
+            )),
+        );
+
+        let expected = Expression::binary_or(
+            Expression::binary_and(Literal("a"), Expression::negate(Literal("b"))),
+            Expression::binary_or(Expression::negate(Literal("b")), Literal("c")),
+        );
+        let actual = input.to_nnf();
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn distribute_basic() {
+        let input_left = Literal("a");
+        let input_right = Expression::binary_and(Literal("b"), Literal("c"));
+
+        let expected = Expression::binary_and(
+            Expression::binary_or(Literal("a"), Literal("b")),
+            Expression::binary_or(Literal("a"), Literal("c")),
+        );
+        let actual = Expression::distribute(input_left, input_right);
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn to_cnf_basic() {
+        let input = Expression::binary_or(
+            Literal("a"),
+            Expression::binary_and(Literal("b"), Literal("c")),
+        );
+
+        let expected = Expression::binary_and(
+            Expression::binary_or(Literal("a"), Literal("b")),
+            Expression::binary_or(Literal("a"), Literal("c")),
+        );
+        let actual = input.to_cnf();
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn to_cnf_n_ary() {
+        let input = Expression::n_ary_or(vec![
+            Literal("a"),
+            Literal("b"),
+            Expression::binary_and(Literal("c"), Literal("d")),
+        ]);
+
+        let expected = Expression::binary_and(
+            Expression::n_ary_or(vec![Literal("a"), Literal("b"), Literal("c")]),
+            Expression::n_ary_or(vec![Literal("a"), Literal("b"), Literal("d")]),
+        );
+        let actual = input.to_cnf();
+
+        assert!(expected.semantic_eq(&actual))
+    }
+}

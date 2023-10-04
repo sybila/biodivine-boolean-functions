@@ -63,16 +63,6 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         Or(es.into_iter().map(Box::new).collect())
     }
 
-    pub fn evaluate(&self, literal_values: &HashMap<T, bool>) -> bool {
-        match self {
-            Literal(ref t) => *literal_values.get(t).unwrap_or(&false),
-            Constant(ref value) => *value,
-            And(ref values) => values.iter().all(|e| e.evaluate(literal_values)),
-            Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
-            Not(ref x) => !x.evaluate(literal_values),
-        }
-    }
-
     // toNNF (Not (Bin And     l r)) = Bin Or  (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∧ ψ) = ¬ϕ ∨ ¬ψ
     // toNNF (Not (Bin Or      l r)) = Bin And (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∨ ψ) = ¬ϕ ∧ ¬ψ
     // toNNF (Bin op      l r)       = Bin op  (toNNF l)       (toNNF r)

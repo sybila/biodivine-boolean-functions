@@ -151,7 +151,9 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
 }
 
 mod tests {
+    #[allow(unused_imports)] // false positive, no idea why
     use crate::expressions::Expression::{self, Literal};
+    #[allow(unused_imports)] // false positive, probably because of usage in macros?
     use crate::traits::SemanticEq;
 
     #[test]

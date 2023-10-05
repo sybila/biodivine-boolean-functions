@@ -173,7 +173,7 @@ mod tests {
         );
         let actual = input.to_nnf();
 
-        assert_eq!(expected, actual)
+        assert!(expected.semantic_eq(&actual));
     }
 
     #[test]
@@ -199,7 +199,7 @@ mod tests {
         );
         let actual = input.to_nnf();
 
-        assert_eq!(expected, actual)
+        assert!(expected.semantic_eq(&actual));
     }
 
     #[test]
@@ -222,7 +222,7 @@ mod tests {
         );
         let actual = input.to_nnf();
 
-        assert_eq!(expected, actual)
+        assert!(expected.semantic_eq(&actual));
     }
 
     #[test]
@@ -236,7 +236,7 @@ mod tests {
         );
         let actual = Expression::distribute(input_left, input_right);
 
-        assert_eq!(expected, actual)
+        assert!(expected.semantic_eq(&actual));
     }
 
     #[test]

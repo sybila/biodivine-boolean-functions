@@ -338,4 +338,26 @@ mod tests {
         assert!(expected.semantic_eq(&actual));
         assert!(actual.is_cnf());
     }
+
+    #[test]
+    fn is_cnf_levels() {
+        let nested = Expression::binary_and(
+            Expression::binary_and(
+                Expression::binary_or(Literal("x"), Literal("y")),
+                Expression::binary_or(Literal("x"), Literal("y")),
+            ),
+            Expression::binary_or(Literal("x"), Literal("y")),
+        );
+
+        let leveled = Expression::n_ary_and(vec![
+            Expression::binary_or(Literal("x"), Literal("y")),
+            Expression::binary_or(Literal("x"), Literal("y")),
+            Expression::binary_or(Literal("x"), Literal("y")),
+        ]);
+
+        assert!(nested.semantic_eq(&leveled));
+
+        assert!(nested.is_cnf());
+        assert!(leveled.is_cnf());
+    }
 }

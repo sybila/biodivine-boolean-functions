@@ -14,8 +14,8 @@ where
     Literal(T),
     Constant(bool),
     Not(Box<Expression<T>>),
-    And(Vec<Box<Expression<T>>>),
-    Or(Vec<Box<Expression<T>>>),
+    And(Vec<Expression<T>>),
+    Or(Vec<Expression<T>>),
 }
 
 impl<T: Debug + Clone + Eq + Hash> Expression<T> {
@@ -48,19 +48,19 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     }
 
     pub fn binary_and(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        And(vec![Box::new(e1), Box::new(e2)])
+        And(vec![e1, e2])
     }
 
     pub fn n_ary_and(es: Vec<Expression<T>>) -> Expression<T> {
-        And(es.into_iter().map(Box::new).collect())
+        And(es)
     }
 
     pub fn binary_or(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        Or(vec![Box::new(e1), Box::new(e2)])
+        Or(vec![e1, e2])
     }
 
     pub fn n_ary_or(es: Vec<Expression<T>>) -> Expression<T> {
-        Or(es.into_iter().map(Box::new).collect())
+        Or(es)
     }
 
     // toNNF (Not (Bin And     l r)) = Bin Or  (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∧ ψ) = ¬ϕ ∨ ¬ψ
@@ -74,23 +74,17 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
             Not(inner) => match *inner {
                 And(expressions) => Or(expressions
                     .into_iter()
-                    .map(|e| Box::new(Not(e).to_nnf()))
+                    .map(|e| Not(Box::new(e)).to_nnf())
                     .collect()),
                 Or(expressions) => And(expressions
                     .into_iter()
-                    .map(|e| Box::new(Not(e).to_nnf()))
+                    .map(|e| Not(Box::new(e)).to_nnf())
                     .collect()),
                 Not(expression) => expression.to_nnf(),
                 expression => Expression::negate(expression.to_nnf()),
             },
-            And(expressions) => And(expressions
-                .into_iter()
-                .map(|e| Box::new(e.to_nnf()))
-                .collect()),
-            Or(expressions) => Or(expressions
-                .into_iter()
-                .map(|e| Box::new(e.to_nnf()))
-                .collect()),
+            And(expressions) => And(expressions.into_iter().map(|e| e.to_nnf()).collect()),
+            Or(expressions) => Or(expressions.into_iter().map(|e| e.to_nnf()).collect()),
             leaf => leaf,
         }
     }
@@ -111,10 +105,7 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
                 // .rev()
                 .reduce(|acc, e| Expression::distribute(acc, e))
                 .unwrap(),
-            And(expressions) => And(expressions
-                .into_iter()
-                .map(|e| Box::new(e.to_cnf()))
-                .collect()),
+            And(expressions) => And(expressions.into_iter().map(|e| e.to_cnf()).collect()),
             expression => expression,
         }
     }
@@ -129,11 +120,11 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         match (first, other) {
             (And(expressions), other) => And(expressions
                 .into_iter()
-                .map(|e| Box::new(Expression::distribute(*e, other.clone())))
+                .map(|e| Expression::distribute(e, other.clone()))
                 .collect()),
             (other, And(expressions)) => And(expressions
                 .into_iter()
-                .map(|e| Box::new(Expression::distribute(other.clone(), *e)))
+                .map(|e| Expression::distribute(other.clone(), e))
                 .collect()),
             (expression1, expression2) => Expression::binary_or(expression1, expression2),
         }

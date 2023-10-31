@@ -150,6 +150,7 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     #[allow(unused_imports)] // false positive, no idea why
     use crate::expressions::Expression::{self, Literal};

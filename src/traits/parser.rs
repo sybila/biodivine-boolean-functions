@@ -1,7 +1,11 @@
-pub trait Parse {
-    fn from_str(input: &str) -> Self;
+use crate::parser::ParseError;
 
-    fn from_string(input: String) -> Self
+pub trait Parse {
+    fn from_str(input: &str) -> Result<Self, ParseError>
+    where
+        Self: Sized;
+
+    fn from_string(input: String) -> Result<Self, ParseError>
     where
         Self: Sized,
     {

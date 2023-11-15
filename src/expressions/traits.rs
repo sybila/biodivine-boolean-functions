@@ -76,8 +76,8 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
     }
 }
 
-impl<T: Debug + Clone + Eq + Hash> Parse for Expression<T> {
-    fn from_str(input: &str) -> Self {
+impl Parse for Expression<String> {
+    fn from_str(input: &str) -> Result<Self, ParseError> {
         todo!("tokenize peekable");
         todo!("parse tokenized");
     }

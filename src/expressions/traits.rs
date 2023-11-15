@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::expressions::Expression::{self, And, Constant, Literal, Not, Or};
-use crate::traits::{Evaluate, GatherLiterals, PowerSet, SemanticEq};
+use crate::traits::{Evaluate, GatherLiterals, Parse, PowerSet, SemanticEq};
 
 impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TLiteral> {
     fn semantic_eq(&self, other: &Self) -> bool {
@@ -73,5 +73,12 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
             Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
             Not(ref x) => !x.evaluate(literal_values),
         }
+    }
+}
+
+impl<T: Debug + Clone + Eq + Hash> Parse for Expression<T> {
+    fn from_str(input: &str) -> Self {
+        todo!("tokenize peekable");
+        todo!("parse tokenized");
     }
 }

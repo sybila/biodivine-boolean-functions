@@ -5,8 +5,8 @@ name: build
 # from dev branches).
 on:
   push:
-    branches-ignore:
-      - 'dev-*'
+    branches:
+      - main
   pull_request:
     branches:
       - '*'

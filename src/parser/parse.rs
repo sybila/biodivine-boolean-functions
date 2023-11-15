@@ -157,8 +157,40 @@ mod tests {
     }
 
     #[test]
-    fn test_parentheses_naryor_ok() -> Result<(), ParseError> {
+    fn test_parentheses_toplevel_ok() -> Result<(), ParseError> {
+        let input = tokenize("(a)")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Literal("a".to_string());
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parentheses_naryor_naryand_ok() -> Result<(), ParseError> {
         let input = tokenize("a | b | (a & b & !c)")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::n_ary_or(vec![
+            Literal("a".to_string()),
+            Literal("b".to_string()),
+            Expression::n_ary_and(vec![
+                Literal("a".to_string()),
+                Literal("b".to_string()),
+                Expression::negate(Literal("c".to_string())),
+            ]),
+        ]);
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_priorities_naryor_naryand_ok() -> Result<(), ParseError> {
+        let input = tokenize("a | b | a & b & !c")?;
         let actual = parse_tokens(&input)?;
         let expected = Expression::n_ary_or(vec![
             Literal("a".to_string()),

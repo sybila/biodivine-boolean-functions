@@ -134,3 +134,300 @@ fn advance_one_and_pop(input: &mut MultiPeek<Chars>, builder: &mut String) {
     input.next();
     builder.pop();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::FinalToken::*;
+    use super::*;
+
+    #[test]
+    fn test_charvar_and_singlespace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a & b")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_and_nospace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a&b")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_and_crazyspace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a       &\nb")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_stringvar_and_singlespace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{a} & {b}")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_stringvar_and_nospace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{a}&{b}")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_stringvar_and_crazyspace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{a}       &\n\t{b}")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    fn all_tokens() -> String {
+        IntermediateToken::all_token_patterns().join("")
+    }
+
+    #[test]
+    fn test_nonalphastringvar_and_singlespace_ok() -> Result<(), TokenizeError> {
+        let name = format!("{{{0}}} & {{{0}}}", all_tokens());
+        let actual = tokenize(name.as_str())?;
+        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nonalphastringvar_and_nospace_ok() -> Result<(), TokenizeError> {
+        let name = format!("{{{0}}}&{{{0}}}", all_tokens());
+        let actual = tokenize(name.as_str())?;
+        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nonalphastringvar_and_crazyspace_ok() -> Result<(), TokenizeError> {
+        let name = format!("{{{0}}}       &\n\t{{{0}}}", all_tokens());
+        let actual = tokenize(name.as_str())?;
+        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_andor_simplespace_singleparentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(a & b)")?;
+        let expected = vec![Parentheses(vec![
+            Literal("a".to_string()),
+            And,
+            Literal("b".to_string()),
+        ])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_andor_simplespace_mediumparentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(a & b) | (c & d)")?;
+        let expected = vec![
+            Parentheses(vec![
+                Literal("a".to_string()),
+                And,
+                Literal("b".to_string()),
+            ]),
+            Or,
+            Parentheses(vec![
+                Literal("c".to_string()),
+                And,
+                Literal("d".to_string()),
+            ]),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_and_simplespace_varparentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("( a ) & b")?;
+        let expected = vec![
+            Parentheses(vec![Literal("a".to_string())]),
+            And,
+            Literal("b".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_and_nospace_varparentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(a)&b")?;
+        let expected = vec![
+            Parentheses(vec![Literal("a".to_string())]),
+            And,
+            Literal("b".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_and_nospace_simplearentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(a&b)")?;
+        let expected = vec![Parentheses(vec![
+            Literal("a".to_string()),
+            And,
+            Literal("b".to_string()),
+        ])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_andor_nospace_mediumparentheses_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(a&b)|(c&d)")?;
+        let expected = vec![
+            Parentheses(vec![
+                Literal("a".to_string()),
+                And,
+                Literal("b".to_string()),
+            ]),
+            Or,
+            Parentheses(vec![
+                Literal("c".to_string()),
+                And,
+                Literal("d".to_string()),
+            ]),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_alloperators_simplespace_crazyparenthesesright_ok() -> Result<(), TokenizeError>
+    {
+        let actual = tokenize("( ! a & ( b | ( c | ( 0 & 1 ) ) ) )")?;
+        let expected = vec![Parentheses(vec![
+            Not,
+            Literal("a".to_string()),
+            And,
+            Parentheses(vec![
+                Literal("b".to_string()),
+                Or,
+                Parentheses(vec![
+                    Literal("c".to_string()),
+                    Or,
+                    Parentheses(vec![ConstantFalse, And, ConstantTrue]),
+                ]),
+            ]),
+        ])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_alloperators_nospace_crazyparenthesesright_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(!a&(b|(c|(0&1))))")?;
+        let expected = vec![Parentheses(vec![
+            Not,
+            Literal("a".to_string()),
+            And,
+            Parentheses(vec![
+                Literal("b".to_string()),
+                Or,
+                Parentheses(vec![
+                    Literal("c".to_string()),
+                    Or,
+                    Parentheses(vec![ConstantFalse, And, ConstantTrue]),
+                ]),
+            ]),
+        ])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_alloperators_simplespace_crazyparenthesesleft_ok() -> Result<(), TokenizeError>
+    {
+        let actual = tokenize("( ( ( ( ( 0 & 1 ) | c ) | b ) & ! a ) )")?;
+        let expected = vec![Parentheses(vec![Parentheses(vec![
+            Parentheses(vec![
+                Parentheses(vec![
+                    Parentheses(vec![ConstantFalse, And, ConstantTrue]),
+                    Or,
+                    Literal("c".to_string()),
+                ]),
+                Or,
+                Literal("b".to_string()),
+            ]),
+            And,
+            Not,
+            Literal("a".to_string()),
+        ])])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_charvar_alloperators_nospace_crazyparenthesesleft_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(((((0&1)|c)|b)&!a))")?;
+        let expected = vec![Parentheses(vec![Parentheses(vec![
+            Parentheses(vec![
+                Parentheses(vec![
+                    Parentheses(vec![ConstantFalse, And, ConstantTrue]),
+                    Or,
+                    Literal("c".to_string()),
+                ]),
+                Or,
+                Literal("b".to_string()),
+            ]),
+            And,
+            Not,
+            Literal("a".to_string()),
+        ])])];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+}

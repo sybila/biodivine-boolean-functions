@@ -91,3 +91,88 @@ fn priority_2_terminal(data: &[FinalToken]) -> Result<Expression<String>, ParseT
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::expressions::Expression::Literal;
+    use crate::parser::{tokenize, ParseError};
+    use crate::traits::SemanticEq;
+
+    use super::*;
+
+    #[test]
+    fn test_binaryand_ok() -> Result<(), ParseError> {
+        let input = tokenize("a & b")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::binary_and(Literal("a".to_string()), Literal("b".to_string()));
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_naryand_ok() -> Result<(), ParseError> {
+        let input = tokenize("a & b & c")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::n_ary_and(vec![
+            Literal("a".to_string()),
+            Literal("b".to_string()),
+            Literal("c".to_string()),
+        ]);
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_binaryor_ok() -> Result<(), ParseError> {
+        let input = tokenize("a | b")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::binary_or(Literal("a".to_string()), Literal("b".to_string()));
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_naryor_ok() -> Result<(), ParseError> {
+        let input = tokenize("a | b | c")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::n_ary_or(vec![
+            Literal("a".to_string()),
+            Literal("b".to_string()),
+            Literal("c".to_string()),
+        ]);
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_parentheses_naryor_ok() -> Result<(), ParseError> {
+        let input = tokenize("a | b | (a & b & !c)")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::n_ary_or(vec![
+            Literal("a".to_string()),
+            Literal("b".to_string()),
+            Expression::n_ary_and(vec![
+                Literal("a".to_string()),
+                Literal("b".to_string()),
+                Expression::negate(Literal("c".to_string())),
+            ]),
+        ]);
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+}

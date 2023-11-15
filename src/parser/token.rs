@@ -11,6 +11,7 @@ pub enum IntermediateToken {
     LiteralLongNameEnd,
 }
 
+#[allow(dead_code)] // false positive on the const arrays
 impl IntermediateToken {
     const AND_PATTERN_BIT: &'static str = "&";
     // const AND_PATTERN_LOGIC: &'static str = "&&";

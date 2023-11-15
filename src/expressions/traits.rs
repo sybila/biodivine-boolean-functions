@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::expressions::Expression::{self, And, Constant, Literal, Not, Or};
+use crate::parser::{parse_tokens, tokenize, ParseError};
 use crate::traits::{Evaluate, GatherLiterals, Parse, PowerSet, SemanticEq};
 
 impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TLiteral> {
@@ -78,7 +79,9 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
 
 impl Parse for Expression<String> {
     fn from_str(input: &str) -> Result<Self, ParseError> {
-        todo!("tokenize peekable");
-        todo!("parse tokenized");
+        let tokens = tokenize(input)?;
+        let parsed = parse_tokens(&tokens)?;
+
+        Ok(parsed)
     }
 }

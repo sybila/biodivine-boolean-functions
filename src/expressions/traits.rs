@@ -10,12 +10,9 @@ impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TL
     fn semantic_eq(&self, other: &Self) -> bool {
         let self_literals = self.gather_literals();
         let other_literals = other.gather_literals();
+        let literals_union = HashSet::from_iter(self_literals.union(&other_literals).cloned());
 
-        if self_literals != other_literals {
-            return false;
-        }
-
-        let all_options = Self::generate_power_set(self_literals);
+        let all_options = Self::generate_power_set(literals_union);
 
         all_options.into_iter().all(|literal_settings| {
             self.evaluate(&literal_settings) == other.evaluate(&literal_settings)

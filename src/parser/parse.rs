@@ -1,7 +1,8 @@
+use itertools::Itertools;
+
 use crate::expressions::Expression;
 use crate::parser::error::ParseTokensError;
 use crate::parser::tokenize::FinalToken;
-use itertools::Itertools;
 
 pub fn parse_tokens(input: &[FinalToken]) -> Result<Expression<String>, ParseTokensError> {
     priority_0_parse_or_alt(input)

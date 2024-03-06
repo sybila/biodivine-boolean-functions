@@ -78,7 +78,7 @@ fn priority_2_terminal(data: &[FinalToken]) -> Result<Expression<String>, ParseT
     } else if data[0] == FinalToken::Not {
         Ok(Expression::negate(priority_2_terminal(&data[1..])?))
     } else if data.len() > 1 {
-        Err(ParseTokensError::TerminalTooLong)
+        Err(ParseTokensError::UnexpectedLiteralsGroup)
     } else {
         match &data[0] {
             FinalToken::ConstantTrue => Ok(Expression::Constant(true)),

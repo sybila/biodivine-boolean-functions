@@ -14,8 +14,8 @@ pub enum TokenizeError {
 pub enum ParseTokensError {
     #[error("Operator had nothing as its operand")]
     EmptySideOfOperator,
-    #[error("Encountered terminal that was too long")]
-    TerminalTooLong,
+    #[error("Unexpected multiple consecutive literals, maybe you are missing an operator?")]
+    UnexpectedLiteralsGroup,
 }
 
 #[derive(thiserror::Error, Debug)]

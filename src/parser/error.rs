@@ -1,4 +1,4 @@
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum TokenizeError {
     #[error("Unexpected `)` encountered")]
     UnexpectedClosingParenthesis,
@@ -10,7 +10,7 @@ pub enum TokenizeError {
     UnexpectedWhitespace,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum ParseTokensError {
     #[error("Operator had nothing as its operand")]
     EmptySideOfOperator,
@@ -18,7 +18,7 @@ pub enum ParseTokensError {
     UnexpectedLiteralsGroup,
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ParseError {
     #[error(transparent)]
     TokenizingError(#[from] TokenizeError),

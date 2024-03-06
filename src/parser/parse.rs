@@ -207,4 +207,18 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_terminal_and_nok() -> Result<(), ParseError> {
+        let input = tokenize("a & b c")?;
+        let actual = parse_tokens(&input);
+
+        assert!(actual.is_err());
+        assert_eq!(
+            actual.unwrap_err(),
+            ParseTokensError::UnexpectedLiteralsGroup
+        );
+
+        Ok(())
+    }
 }

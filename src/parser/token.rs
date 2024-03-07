@@ -185,6 +185,8 @@ impl<'a> IntermediateToken<'a> {
 
 #[cfg(test)]
 mod tests {
+    use regex::Regex;
+
     use super::*;
 
     #[test]
@@ -194,5 +196,25 @@ mod tests {
         let expected = 1;
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_ordered_patterns() {
+        let tokens = IntermediateToken::all_token_patterns_ordered_from_longest();
+
+        assert!(tokens
+            .iter()
+            .zip(tokens.iter().skip(1))
+            .all(|(previous, current)| previous.chars().count() >= current.chars().count()))
+    }
+
+    #[test]
+    fn test_regex_line_start_char_escaped_ok() {
+        let and_str_pattern = "^";
+        let pattern = Regex::new(&format!(r"(?i)^{}", regex::escape(and_str_pattern))).unwrap();
+
+        let builder = "a&b".to_string();
+
+        assert!(!pattern.is_match(&builder))
     }
 }

@@ -77,6 +77,8 @@ impl IntermediateToken {
 
     pub const LITERAL_START_PATTERN: &'static str = "{";
     pub const LITERAL_END_PATTERN: &'static str = "}";
+    const PARENTHESIS_START_PATTERN: &'static str = "(";
+    const PARENTHESIS_END_PATTERN: &'static str = ")";
 
     pub fn all_token_patterns<'a>() -> Vec<&'a str> {
         [

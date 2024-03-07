@@ -12,7 +12,7 @@ pub enum IntermediateToken {
 }
 
 #[allow(dead_code)] // false positive on the const arrays
-impl IntermediateToken {
+impl<'a> IntermediateToken<'a> {
     const AND_PATTERN_BIT: &'static str = "&";
     // const AND_PATTERN_LOGIC: &'static str = "&&";
     // const AND_PATTERN_WORD: &'static str = "and";
@@ -87,6 +87,13 @@ impl IntermediateToken {
             Self::NOT_PATTERNS.as_slice(),
             Self::FALSE_PATTERNS.as_slice(),
             Self::TRUE_PATTERNS.as_slice(),
+            [
+                Self::LITERAL_START_PATTERN,
+                Self::LITERAL_END_PATTERN,
+                Self::PARENTHESIS_START_PATTERN,
+                Self::PARENTHESIS_END_PATTERN,
+            ]
+            .as_slice(),
         ]
         .concat()
     }

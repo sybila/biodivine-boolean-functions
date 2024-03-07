@@ -52,6 +52,7 @@ fn tokenize_level(
         builder.push(*c);
 
         let final_token = match IntermediateToken::try_from(builder.as_str()) {
+            // Did not match token and we just peeked whitespace
             None if c.is_whitespace() => {
                 if builder.is_empty() || builder.chars().all(char::is_whitespace) {
                     advance_all_build_and_clear(input, &mut builder);
@@ -61,6 +62,7 @@ fn tokenize_level(
                 }
             }
             // None => FinalToken::Literal(std::mem::take(&mut builder)),
+            // Did not match token and we did not just peek whitespace
             None => FinalToken::Literal(builder.clone()),
             Some(token) => {
                 match token {
@@ -87,7 +89,7 @@ fn tokenize_level(
                         };
                     }
                     IntermediateToken::LiteralLongNameStart => {
-                        // maybe assert that builder is empty?
+                        // TODO maybe assert that builder is empty?
 
                         // move over from the initial `{`
                         advance_one_and_pop(input, &mut builder);
@@ -103,6 +105,7 @@ fn tokenize_level(
                         }
 
                         // FinalToken::Literal(std::mem::take(&mut builder))
+                        // TODO return TokenizeError if builder is empty at the end
                         FinalToken::Literal(builder.clone())
                     }
                     IntermediateToken::LiteralLongNameEnd => {

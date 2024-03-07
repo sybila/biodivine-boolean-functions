@@ -75,7 +75,7 @@ impl IntermediateToken {
         Self::FALSE_PATTERN_NUM,
     ];
 
-    const LITERAL_START_PATTERN: &'static str = "{";
+    pub const LITERAL_START_PATTERN: &'static str = "{";
     pub const LITERAL_END_PATTERN: &'static str = "}";
 
     pub fn all_token_patterns<'a>() -> Vec<&'a str> {

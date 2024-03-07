@@ -204,11 +204,22 @@ mod tests {
         IntermediateToken::all_token_patterns().join("")
     }
 
+    fn all_tokens_without_literal_delimiters() -> String {
+        all_tokens()
+            .replace(IntermediateToken::LITERAL_START_PATTERN, "")
+            .replace(IntermediateToken::LITERAL_END_PATTERN, "")
+    }
+
     #[test]
     fn test_nonalphastringvar_and_singlespace_ok() -> Result<(), TokenizeError> {
-        let name = format!("{{{0}}} & {{{0}}}", all_tokens());
+        // do not contain curly braces in check
+        let name = format!("{{{0}}} & {{{0}}}", all_tokens_without_literal_delimiters());
         let actual = tokenize(name.as_str())?;
-        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+        let expected = vec![
+            Literal(all_tokens_without_literal_delimiters()),
+            And,
+            Literal(all_tokens_without_literal_delimiters()),
+        ];
 
         assert_eq!(actual, expected);
 
@@ -217,9 +228,13 @@ mod tests {
 
     #[test]
     fn test_nonalphastringvar_and_nospace_ok() -> Result<(), TokenizeError> {
-        let name = format!("{{{0}}}&{{{0}}}", all_tokens());
+        let name = format!("{{{0}}}&{{{0}}}", all_tokens_without_literal_delimiters());
         let actual = tokenize(name.as_str())?;
-        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+        let expected = vec![
+            Literal(all_tokens_without_literal_delimiters()),
+            And,
+            Literal(all_tokens_without_literal_delimiters()),
+        ];
 
         assert_eq!(actual, expected);
 
@@ -228,9 +243,16 @@ mod tests {
 
     #[test]
     fn test_nonalphastringvar_and_crazyspace_ok() -> Result<(), TokenizeError> {
-        let name = format!("{{{0}}}       &\n\t{{{0}}}", all_tokens());
+        let name = format!(
+            "{{{0}}}       &\n\t{{{0}}}",
+            all_tokens_without_literal_delimiters()
+        );
         let actual = tokenize(name.as_str())?;
-        let expected = vec![Literal(all_tokens()), And, Literal(all_tokens())];
+        let expected = vec![
+            Literal(all_tokens_without_literal_delimiters()),
+            And,
+            Literal(all_tokens_without_literal_delimiters()),
+        ];
 
         assert_eq!(actual, expected);
 

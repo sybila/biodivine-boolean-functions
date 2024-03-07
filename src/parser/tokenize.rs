@@ -64,11 +64,11 @@ fn tokenize_level(
             None => FinalToken::Literal(builder.clone()),
             Some(token) => {
                 match token {
-                    IntermediateToken::And => FinalToken::And,
-                    IntermediateToken::Or => FinalToken::Or,
-                    IntermediateToken::Not => FinalToken::Not,
-                    IntermediateToken::ConstantTrue => FinalToken::ConstantTrue,
-                    IntermediateToken::ConstantFalse => FinalToken::ConstantFalse,
+                    IntermediateToken::And { .. } => FinalToken::And,
+                    IntermediateToken::Or { .. } => FinalToken::Or,
+                    IntermediateToken::Not { .. } => FinalToken::Not,
+                    IntermediateToken::ConstantTrue { .. } => FinalToken::ConstantTrue,
+                    IntermediateToken::ConstantFalse { .. } => FinalToken::ConstantFalse,
                     IntermediateToken::ParenthesesStart => {
                         // move over from the initial `(`
                         advance_one_and_pop(input, &mut builder);

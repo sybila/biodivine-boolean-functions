@@ -10,6 +10,8 @@ pub enum TokenizeError {
     MissingClosingCurlyBrace { position: usize, vicinity: String },
     #[error("No name literal `{{}}` encountered on position {position} near '{vicinity}'")]
     EmptyLiteralName { position: usize, vicinity: String },
+    #[error("Unknown symbol {symbol} encountered on position {position}'")]
+    UnknownSymbolError { position: usize, symbol: String },
     #[error("Unexpected whitespace encountered in the middle of operator")]
     UnexpectedWhitespace,
 }

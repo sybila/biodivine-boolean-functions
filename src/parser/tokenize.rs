@@ -26,7 +26,7 @@ fn tokenize_level(
         let intermediate_token = IntermediateToken::try_from(buffer.as_str());
 
         match intermediate_token {
-            None => consume_while_literal(input, &mut result),
+            None => consume_while_literal(input, &mut result)?,
             Some(token) => {
                 let (final_token, pattern_length) = match token {
                     IntermediateToken::And { pattern } => {
@@ -141,12 +141,17 @@ fn consume_until_brace(
     Ok((FinalToken::Literal(literal_buffer), 0))
 }
 
-fn consume_while_literal(input: &mut TokenizerInput, result: &mut Vec<FinalToken>) {
+fn consume_while_literal(
+    input: &mut TokenizerInput,
+    result: &mut Vec<FinalToken>,
+) -> Result<(), TokenizeError> {
     let mut literal_buffer: String = String::new();
+    let mut last_c = None;
     input.iterator.reset_peek();
 
     while let Some(c) = input.iterator.peek() {
         if SHOULD_END_LITERAL.is_match(&c.to_string()) {
+            last_c = Some(*c);
             break;
         }
 
@@ -154,17 +159,31 @@ fn consume_while_literal(input: &mut TokenizerInput, result: &mut Vec<FinalToken
         input.next();
     }
 
+    // we came here not matching a token, but found no literal either
+    if literal_buffer.is_empty() {
+        return Err(TokenizeError::UnknownSymbolError {
+            position: input.current_position(),
+            symbol: match last_c {
+                None => EOL_VICINITY.to_string(),
+                Some(c) => c.to_string(),
+            },
+        });
+    }
+
     result.push(FinalToken::Literal(literal_buffer));
+
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use crate::parser::error::TokenizeError::{
         EmptyLiteralName, MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace,
-        UnexpectedClosingParenthesis,
+        UnexpectedClosingParenthesis, UnknownSymbolError,
     };
     use crate::parser::error::EOL_VICINITY;
     use crate::parser::structs::FinalToken::*;
+    use crate::parser::utils::LITERAL_IDENTIFIER;
 
     use super::*;
 
@@ -194,6 +213,26 @@ mod tests {
         let expected = vec![Literal("abcdefgh".to_string())];
 
         assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_unknownchar_minimal_nok() -> Result<(), TokenizeError> {
+        let input = "@";
+
+        // test sanity
+        assert!(!all_tokens().contains(input));
+        assert!(!LITERAL_IDENTIFIER.is_match(input));
+
+        let actual = tokenize(input);
+        let expected_err = UnknownSymbolError {
+            position: 0,
+            symbol: "@".to_string(),
+        };
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
-use crate::parser::error::TokenizeError;
 use crate::parser::error::TokenizeError::MissingClosingParenthesis;
+use crate::parser::error::{TokenizeError, EOL_VICINITY};
 use crate::parser::structs::{FinalToken, IntermediateToken, PositionTracker};
 use crate::parser::utils::SHOULD_END_LITERAL;
 use crate::parser::utils::{peek_until_n, pop_n_left, trim_whitespace_left};
@@ -45,7 +45,10 @@ fn tokenize_level(
                     IntermediateToken::ParenthesesStart => handle_parentheses(input, &mut buffer)?,
                     IntermediateToken::ParenthesesEnd => {
                         return if is_top_level {
-                            Err(TokenizeError::UnexpectedClosingParenthesis)
+                            Err(TokenizeError::UnexpectedClosingParenthesis {
+                                position: input.current_position(),
+                                vicinity: buffer.clone(),
+                            })
                         } else {
                             // move over from the final `)`
                             pop_n_left(&mut buffer, input, 1);
@@ -57,7 +60,10 @@ fn tokenize_level(
                         consume_until_brace(input, &mut buffer)?
                     }
                     IntermediateToken::LiteralLongNameEnd => {
-                        return Err(TokenizeError::UnexpectedClosingCurlyBrace);
+                        return Err(TokenizeError::UnexpectedClosingCurlyBrace {
+                            position: input.current_position(),
+                            vicinity: buffer.clone(),
+                        });
                     }
                 };
 
@@ -76,7 +82,10 @@ fn tokenize_level(
     if is_top_level {
         Ok(result)
     } else {
-        Err(MissingClosingParenthesis)
+        Err(MissingClosingParenthesis {
+            position: input.current_position(),
+            vicinity: EOL_VICINITY.to_string(),
+        })
     }
 }
 
@@ -117,10 +126,16 @@ fn consume_until_brace(
     }
 
     if !did_hit_closing_brace {
-        return Err(TokenizeError::MissingClosingCurlyBrace);
+        return Err(TokenizeError::MissingClosingCurlyBrace {
+            position: input.current_position(),
+            vicinity: EOL_VICINITY.to_string(),
+        });
     }
     if literal_buffer.is_empty() {
-        return Err(TokenizeError::EmptyLiteralName);
+        return Err(TokenizeError::EmptyLiteralName {
+            position: input.current_position(),
+            vicinity: buffer.clone(),
+        });
     }
 
     Ok((FinalToken::Literal(literal_buffer), 0))
@@ -148,6 +163,7 @@ mod tests {
         EmptyLiteralName, MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace,
         UnexpectedClosingParenthesis,
     };
+    use crate::parser::error::EOL_VICINITY;
     use crate::parser::structs::FinalToken::*;
 
     use super::*;
@@ -498,9 +514,13 @@ mod tests {
     #[test]
     fn test_nospace_parenthesesnotclosed_minimal_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("(");
+        let expected_err = MissingClosingParenthesis {
+            position: 1,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -508,9 +528,13 @@ mod tests {
     #[test]
     fn test_nospace_parenthesesnotclosed_nested_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("(((()()))");
+        let expected_err = MissingClosingParenthesis {
+            position: 9,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -518,9 +542,13 @@ mod tests {
     #[test]
     fn test_singlespace_parenthesesnotclosed_minimal_nok() -> Result<(), TokenizeError> {
         let actual = tokenize(" ( ");
+        let expected_err = MissingClosingParenthesis {
+            position: 3,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -528,9 +556,13 @@ mod tests {
     #[test]
     fn test_singlespace_parenthesesnotclosed_nested_nok() -> Result<(), TokenizeError> {
         let actual = tokenize(" ( ( ( ( ) ( ) ) )");
+        let expected_err = MissingClosingParenthesis {
+            position: 18,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -538,9 +570,13 @@ mod tests {
     #[test]
     fn test_nospace_parenthesesnotopened_minimal_nok() -> Result<(), TokenizeError> {
         let actual = tokenize(")");
+        let expected_err = UnexpectedClosingParenthesis {
+            position: 0,
+            vicinity: ")".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -548,9 +584,13 @@ mod tests {
     #[test]
     fn test_nospace_parenthesesnotopened_nested_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("(((()))))");
+        let expected_err = UnexpectedClosingParenthesis {
+            position: 8,
+            vicinity: ")".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -558,9 +598,13 @@ mod tests {
     #[test]
     fn test_singlespace_parenthesesnotopened_minimal_nok() -> Result<(), TokenizeError> {
         let actual = tokenize(" ) ");
+        let expected_err = UnexpectedClosingParenthesis {
+            position: 1,
+            vicinity: ") ".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -568,9 +612,13 @@ mod tests {
     #[test]
     fn test_singlespace_parenthesesnotopened_nested_nok() -> Result<(), TokenizeError> {
         let actual = tokenize(" ( ( ( ( ) ) ) ) )");
+        let expected_err = UnexpectedClosingParenthesis {
+            position: 17,
+            vicinity: ")".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -578,9 +626,13 @@ mod tests {
     #[test]
     fn test_bracenotopened_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("}");
+        let expected_err = UnexpectedClosingCurlyBrace {
+            position: 0,
+            vicinity: "}".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), UnexpectedClosingCurlyBrace);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -588,9 +640,13 @@ mod tests {
     #[test]
     fn test_bracenotclosed_empty_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("{");
+        let expected_err = MissingClosingCurlyBrace {
+            position: 1,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingCurlyBrace);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -598,9 +654,13 @@ mod tests {
     #[test]
     fn test_bracenotclosed_nonempty_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("{abc&&");
+        let expected_err = MissingClosingCurlyBrace {
+            position: 6,
+            vicinity: EOL_VICINITY.to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), MissingClosingCurlyBrace);
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }
@@ -626,11 +686,46 @@ mod tests {
     }
 
     #[test]
-    fn test_brace_empty_nok() -> Result<(), TokenizeError> {
+    fn test_brace_empty_minimal_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("{}");
+        // consume_until_brace always skips the first {, leaving the buffer starting with }
+        let expected_err = EmptyLiteralName {
+            position: 2,
+            vicinity: "}".to_string(),
+        };
 
         assert!(actual.is_err());
-        assert_eq!(actual.unwrap_err(), EmptyLiteralName);
+        assert_eq!(actual.unwrap_err(), expected_err);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_brace_empty_end_nok() -> Result<(), TokenizeError> {
+        let input = "a and (False || {})";
+        let actual = tokenize(input);
+        let expected_err = EmptyLiteralName {
+            position: input.find("{}").unwrap() + "{}".chars().count(),
+            vicinity: "})".to_string(),
+        };
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), expected_err);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_brace_empty_start_nok() -> Result<(), TokenizeError> {
+        let input = "{} and (False || b)";
+        let actual = tokenize(input);
+        let expected_err = EmptyLiteralName {
+            position: input.find("{}").unwrap() + "{}".chars().count(),
+            vicinity: "} and".to_string(),
+        };
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), expected_err);
 
         Ok(())
     }

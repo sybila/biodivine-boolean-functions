@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_charvar_and_crazyspace_ok() -> Result<(), TokenizeError> {
-        let actual = tokenize("a       &\nb")?;
+        let actual = tokenize("a       &\t\nb")?;
         let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
 
         assert_eq!(actual, expected);

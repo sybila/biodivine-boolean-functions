@@ -110,8 +110,10 @@ fn tokenize_level(
                         if !did_hit_closing_brace {
                             return Err(TokenizeError::MissingClosingCurlyBrace);
                         }
+                        if literal_buffer.is_empty() {
+                            return Err(TokenizeError::EmptyLiteralName);
+                        }
 
-                        // TODO return TokenizeError if builder is empty at the end
                         (FinalToken::Literal(literal_buffer), 0)
                     }
                     IntermediateToken::LiteralLongNameEnd => {
@@ -190,7 +192,8 @@ mod tests {
     use super::FinalToken::*;
     use super::*;
     use crate::parser::error::TokenizeError::{
-        MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace, UnexpectedClosingParenthesis,
+        EmptyLiteralName, MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace,
+        UnexpectedClosingParenthesis,
     };
 
     #[test]
@@ -701,6 +704,26 @@ mod tests {
 
         assert!(actual.is_err());
         assert_eq!(actual.unwrap_err(), MissingClosingCurlyBrace);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_brace_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{abc&&}")?;
+        let expected = vec![Literal("abc&&".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_brace_empty_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{}");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), EmptyLiteralName);
 
         Ok(())
     }

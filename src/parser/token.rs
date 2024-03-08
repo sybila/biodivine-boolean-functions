@@ -17,64 +17,64 @@ pub enum IntermediateToken<'a> {
 #[allow(dead_code)] // false positive on the const arrays
 impl<'a> IntermediateToken<'a> {
     const AND_PATTERN_BIT: &'static str = "&";
-    // const AND_PATTERN_LOGIC: &'static str = "&&";
-    // const AND_PATTERN_WORD: &'static str = "and";
+    const AND_PATTERN_LOGIC: &'static str = "&&";
+    const AND_PATTERN_WORD: &'static str = "and";
     const AND_PATTERN_MATH: &'static str = "∧";
     const AND_PATTERN_MATH_2: &'static str = "^";
     const AND_PATTERN_BOOL: &'static str = "*";
 
-    const AND_PATTERNS: [&'static str; 4] = [
+    const AND_PATTERNS: [&'static str; 6] = [
         Self::AND_PATTERN_BIT,
-        // Self::AND_PATTERN_LOGIC,
-        // Self::AND_PATTERN_WORD,
+        Self::AND_PATTERN_LOGIC,
+        Self::AND_PATTERN_WORD,
         Self::AND_PATTERN_MATH,
         Self::AND_PATTERN_MATH_2,
         Self::AND_PATTERN_BOOL,
     ];
 
     const OR_PATTERN_BIT: &'static str = "|";
-    // const OR_PATTERN_LOGIC: &'static str = "||";
-    // const OR_PATTERN_WORD: &'static str = "or";
+    const OR_PATTERN_LOGIC: &'static str = "||";
+    const OR_PATTERN_WORD: &'static str = "or";
     const OR_PATTERN_MATH: &'static str = "∨";
-    // const OR_PATTERN_MATH_2: &'static str = "v";
+    const OR_PATTERN_MATH_2: &'static str = "v";
     const OR_PATTERN_BOOL: &'static str = "+";
-    const OR_PATTERNS: [&'static str; 3] = [
+    const OR_PATTERNS: [&'static str; 6] = [
         Self::OR_PATTERN_BIT,
-        // Self::OR_PATTERN_LOGIC,
-        // Self::OR_PATTERN_WORD,
+        Self::OR_PATTERN_LOGIC,
+        Self::OR_PATTERN_WORD,
         Self::OR_PATTERN_MATH,
-        // Self::OR_PATTERN_MATH_2,
+        Self::OR_PATTERN_MATH_2,
         Self::OR_PATTERN_BOOL,
     ];
 
     const NOT_PATTERN_TILDE: &'static str = "~";
     const NOT_PATTERN_MARK: &'static str = "!";
-    // const NOT_PATTERN_WORD: &'static str = "not";
+    const NOT_PATTERN_WORD: &'static str = "not";
     const NOT_PATTERN_MATH: &'static str = "¬";
-    const NOT_PATTERNS: [&'static str; 3] = [
+    const NOT_PATTERNS: [&'static str; 4] = [
         Self::NOT_PATTERN_TILDE,
         Self::NOT_PATTERN_MARK,
-        // Self::NOT_PATTERN_WORD,
+        Self::NOT_PATTERN_WORD,
         Self::NOT_PATTERN_MATH,
     ];
 
-    // const TRUE_PATTERN_CHAR: &'static str = "t";
-    // const TRUE_PATTERN_WORD: &'static str = "true";
+    const TRUE_PATTERN_CHAR: &'static str = "t";
+    const TRUE_PATTERN_WORD: &'static str = "true";
     const TRUE_PATTERN_NUM: &'static str = "1";
 
-    const TRUE_PATTERNS: [&'static str; 1] = [
-        // Self::TRUE_PATTERN_CHAR,
-        // Self::TRUE_PATTERN_WORD,
+    const TRUE_PATTERNS: [&'static str; 3] = [
+        Self::TRUE_PATTERN_CHAR,
+        Self::TRUE_PATTERN_WORD,
         Self::TRUE_PATTERN_NUM,
     ];
 
-    // const FALSE_PATTERN_CHAR: &'static str = "f";
-    // const FALSE_PATTERN_WORD: &'static str = "false";
+    const FALSE_PATTERN_CHAR: &'static str = "f";
+    const FALSE_PATTERN_WORD: &'static str = "false";
     const FALSE_PATTERN_NUM: &'static str = "0";
 
-    const FALSE_PATTERNS: [&'static str; 1] = [
-        // Self::FALSE_PATTERN_CHAR,
-        // Self::FALSE_PATTERN_WORD,
+    const FALSE_PATTERNS: [&'static str; 3] = [
+        Self::FALSE_PATTERN_CHAR,
+        Self::FALSE_PATTERN_WORD,
         Self::FALSE_PATTERN_NUM,
     ];
 
@@ -151,40 +151,38 @@ impl<'a> IntermediateToken<'a> {
         // TODO-done order by length of pattern, match prefix (maybe with regex and capture group)
         match pattern.to_lowercase().as_str() {
             Self::AND_PATTERN_BIT
-            // | Self::AND_PATTERN_LOGIC
-            // | Self::AND_PATTERN_WORD
+            | Self::AND_PATTERN_LOGIC
+            | Self::AND_PATTERN_WORD
             | Self::AND_PATTERN_MATH
             | Self::AND_PATTERN_MATH_2
             | Self::AND_PATTERN_BOOL => And { pattern },
 
             Self::OR_PATTERN_BIT
-            // | Self::OR_PATTERN_LOGIC
-            // | Self::OR_PATTERN_WORD
+            | Self::OR_PATTERN_LOGIC
+            | Self::OR_PATTERN_WORD
             | Self::OR_PATTERN_MATH
-            // | Self::OR_PATTERN_MATH_2
+            | Self::OR_PATTERN_MATH_2
             | Self::OR_PATTERN_BOOL => Or { pattern },
 
-            Self::NOT_PATTERN_TILDE |
-            Self::NOT_PATTERN_MARK |
-            // Self::NOT_PATTERN_WORD |
-            Self::NOT_PATTERN_MATH
-            => Not { pattern },
+            Self::NOT_PATTERN_TILDE
+            | Self::NOT_PATTERN_MARK
+            | Self::NOT_PATTERN_WORD
+            | Self::NOT_PATTERN_MATH => Not { pattern },
 
-            // | Self::FALSE_PATTERN_CHAR
-            // | Self::FALSE_PATTERN_WORD
-            Self::FALSE_PATTERN_NUM => {
+            Self::FALSE_PATTERN_CHAR | Self::FALSE_PATTERN_WORD | Self::FALSE_PATTERN_NUM => {
                 ConstantFalse { pattern }
             }
-            // | Self::TRUE_PATTERN_CHAR
-            // | Self::TRUE_PATTERN_WORD
-            Self::TRUE_PATTERN_NUM => {
+            Self::TRUE_PATTERN_CHAR | Self::TRUE_PATTERN_WORD | Self::TRUE_PATTERN_NUM => {
                 ConstantTrue { pattern }
             }
             Self::PARENTHESIS_START_PATTERN => ParenthesesStart,
             Self::PARENTHESIS_END_PATTERN => ParenthesesEnd,
             Self::LITERAL_START_PATTERN => LiteralLongNameStart,
             Self::LITERAL_END_PATTERN => LiteralLongNameEnd,
-            _ => panic!("Invalid value passed to IntermediateToken::from: {}", pattern),
+            _ => panic!(
+                "Invalid value passed to IntermediateToken::from: {}",
+                pattern
+            ),
         }
     }
 }
@@ -198,8 +196,7 @@ mod tests {
     #[test]
     fn test_longest() {
         let actual = IntermediateToken::longest_token_len();
-        // let expected = Token::FALSE_PATTERN_WORD.len();
-        let expected = 1;
+        let expected = IntermediateToken::FALSE_PATTERN_WORD.len();
 
         assert_eq!(actual, expected);
     }

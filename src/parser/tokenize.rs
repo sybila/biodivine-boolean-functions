@@ -1,29 +1,28 @@
-use std::str::Chars;
-
-use itertools::{Itertools, MultiPeek};
+use itertools::Itertools;
 
 use crate::parser::error::TokenizeError;
 use crate::parser::error::TokenizeError::MissingClosingParenthesis;
-use crate::parser::structs::{FinalToken, IntermediateToken};
+use crate::parser::structs::{FinalToken, IntermediateToken, PositionTracker};
 use crate::parser::utils::SHOULD_END_LITERAL;
 use crate::parser::utils::{peek_until_n, pop_n_left, trim_whitespace_left};
+use crate::parser::TokenizerInput;
 
 pub fn tokenize(input: &str) -> Result<Vec<FinalToken>, TokenizeError> {
-    tokenize_level(&mut input.chars().multipeek(), true)
+    tokenize_level(&mut PositionTracker::new(input.chars().multipeek()), true)
 }
 
 fn tokenize_level(
-    input: &mut MultiPeek<Chars>,
+    input: &mut TokenizerInput,
     is_top_level: bool,
 ) -> Result<Vec<FinalToken>, TokenizeError> {
     let mut result = vec![];
     let mut buffer = String::new();
     let take_size = IntermediateToken::longest_token_len() + 1;
 
-    // trim whitespace in case of whitespace after opening parentesis
+    // trim whitespace in case of whitespace after opening parenthesis
     trim_whitespace_left(input);
 
-    while peek_until_n(take_size, input, &mut buffer) || !buffer.is_empty() {
+    while peek_until_n(take_size, &mut input.iterator, &mut buffer) || !buffer.is_empty() {
         let intermediate_token = IntermediateToken::try_from(buffer.as_str());
 
         match intermediate_token {
@@ -69,7 +68,7 @@ fn tokenize_level(
 
         // TODO try to reconcile this to not require resetting peeking after every iteration,
         // TODO but to use what's in the buffer already
-        input.reset_peek();
+        input.iterator.reset_peek();
         buffer.clear();
         trim_whitespace_left(input);
     }
@@ -82,7 +81,7 @@ fn tokenize_level(
 }
 
 fn handle_parentheses(
-    input: &mut MultiPeek<Chars>,
+    input: &mut TokenizerInput,
     buffer: &mut String,
 ) -> Result<(FinalToken, usize), TokenizeError> {
     // move over from the initial `(`
@@ -93,7 +92,7 @@ fn handle_parentheses(
 }
 
 fn consume_until_brace(
-    input: &mut MultiPeek<Chars>,
+    input: &mut TokenizerInput,
     buffer: &mut String,
 ) -> Result<(FinalToken, usize), TokenizeError> {
     // TODO maybe assert that builder is empty?
@@ -102,9 +101,9 @@ fn consume_until_brace(
     pop_n_left(buffer, input, 1);
     let mut literal_buffer: String = String::new();
     let mut did_hit_closing_brace = false;
-    input.reset_peek();
+    input.iterator.reset_peek();
 
-    while let Some(c) = input.peek() {
+    while let Some(c) = input.iterator.peek() {
         if c.to_string() == IntermediateToken::LITERAL_END_PATTERN {
             // move over from the final `}`
             input.next();
@@ -127,11 +126,11 @@ fn consume_until_brace(
     Ok((FinalToken::Literal(literal_buffer), 0))
 }
 
-fn consume_while_literal(input: &mut MultiPeek<Chars>, result: &mut Vec<FinalToken>) {
+fn consume_while_literal(input: &mut TokenizerInput, result: &mut Vec<FinalToken>) {
     let mut literal_buffer: String = String::new();
-    input.reset_peek();
+    input.iterator.reset_peek();
 
-    while let Some(c) = input.peek() {
+    while let Some(c) = input.iterator.peek() {
         if SHOULD_END_LITERAL.is_match(&c.to_string()) {
             break;
         }

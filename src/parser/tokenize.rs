@@ -197,6 +197,95 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_peek_n() {
+        for input_size in 0..=10 {
+            let input = "a".repeat(input_size);
+            let mut buffer = String::new();
+
+            let mut input = input.chars().multipeek();
+
+            let target_peak = 6;
+            let did_read_anything = peek_until_n(target_peak, &mut input, &mut buffer);
+
+            assert_eq!(did_read_anything, input_size >= 1, "i: {input_size}");
+            assert_eq!(
+                buffer.chars().count(),
+                usize::min(input_size, target_peak),
+                "i: {input_size}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_pop_from_start() {
+        let mut buffer = String::from("");
+        let input = buffer.clone();
+        let mut input = input.chars().multipeek();
+
+        pop_n_left(&mut buffer, &mut input, 3);
+        assert_eq!(&buffer, "");
+        assert_eq!(&input.join(""), "");
+
+        let mut buffer = String::from("a");
+        pop_n_left(&mut buffer, &mut input, 3);
+        let input = buffer.clone();
+        let mut input = input.chars().multipeek();
+        assert_eq!(&buffer, "");
+        assert_eq!(&input.join(""), "");
+
+        let mut buffer = String::from("ab");
+        pop_n_left(&mut buffer, &mut input, 3);
+        let input = buffer.clone();
+        let mut input = input.chars().multipeek();
+        assert_eq!(&buffer, "");
+        assert_eq!(&input.join(""), "");
+
+        let mut buffer = String::from("abc");
+        pop_n_left(&mut buffer, &mut input, 3);
+        let input = buffer.clone();
+        let mut input = input.chars().multipeek();
+        assert_eq!(&buffer, "");
+        assert_eq!(&input.join(""), "");
+
+        let mut buffer = String::from("abcd");
+        pop_n_left(&mut buffer, &mut input, 3);
+        let input = buffer.clone();
+        let mut input = input.chars().multipeek();
+        assert_eq!(&buffer, "d");
+        assert_eq!(&input.join(""), "d");
+    }
+
+    #[test]
+    fn test_charvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a")?;
+        let expected = vec![Literal("a".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_stringvar_short_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("abcd")?;
+        let expected = vec![Literal("abcd".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_stringvar_long_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("abcdefgh")?;
+        let expected = vec![Literal("abcdefgh".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_charvar_and_singlespace_ok() -> Result<(), TokenizeError> {
         let actual = tokenize("a & b")?;
         let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];

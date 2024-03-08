@@ -617,6 +617,16 @@ mod tests {
     }
 
     #[test]
+    fn test_brace_spaces_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{ abc && }")?;
+        let expected = vec![Literal(" abc && ".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_brace_empty_nok() -> Result<(), TokenizeError> {
         let actual = tokenize("{}");
 

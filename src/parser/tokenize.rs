@@ -27,16 +27,15 @@ fn tokenize_level(
     is_top_level: bool,
 ) -> Result<Vec<FinalToken>, TokenizeError> {
     let mut result = vec![];
-    // TODO rename to buffer
-    let mut builder = String::new();
+    let mut buffer = String::new();
     let take_size = IntermediateToken::longest_token_len() + 1;
 
     // TODO make regex lazy-static
     let should_end_literal = Regex::new(r"[^-_a-zA-Z0-9]").unwrap();
 
     trim_whitespace_left(input);
-    while peek_until_n(take_size, input, &mut builder) || !builder.is_empty() {
-        let intermediate_token = IntermediateToken::try_from(builder.as_str());
+    while peek_until_n(take_size, input, &mut buffer) || !buffer.is_empty() {
+        let intermediate_token = IntermediateToken::try_from(buffer.as_str());
 
         match intermediate_token {
             None => {
@@ -71,7 +70,7 @@ fn tokenize_level(
                     }
                     IntermediateToken::ParenthesesStart => {
                         // move over from the initial `(`
-                        pop_n_left(&mut builder, input, 1);
+                        pop_n_left(&mut buffer, input, 1);
 
                         let tokens = tokenize_level(input, false)?;
                         (FinalToken::Parentheses(tokens), 0)
@@ -81,7 +80,7 @@ fn tokenize_level(
                             Err(TokenizeError::UnexpectedClosingParenthesis)
                         } else {
                             // move over from the final `)`
-                            pop_n_left(&mut builder, input, 1);
+                            pop_n_left(&mut buffer, input, 1);
 
                             Ok(result)
                         };
@@ -90,7 +89,7 @@ fn tokenize_level(
                         // TODO maybe assert that builder is empty?
 
                         // move over from the initial `{`, resetting peeking
-                        pop_n_left(&mut builder, input, 1);
+                        pop_n_left(&mut buffer, input, 1);
                         let mut literal_buffer: String = String::new();
                         input.reset_peek();
 
@@ -114,14 +113,14 @@ fn tokenize_level(
                 };
 
                 result.push(final_token);
-                pop_n_left(&mut builder, input, pattern_length);
+                pop_n_left(&mut buffer, input, pattern_length);
             }
         }
 
         // TODO try to reconcile this to not require resetting peeking after every iteration,
         // TODO but to use what's in the buffer already
         input.reset_peek();
-        builder.clear();
+        buffer.clear();
         trim_whitespace_left(input);
     }
 

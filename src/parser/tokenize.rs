@@ -179,18 +179,6 @@ fn peek_until_n(n: usize, input: &mut MultiPeek<Chars>, buffer: &mut String) -> 
     did_read_anything
 }
 
-fn advance_all_build_and_clear(input: &mut MultiPeek<Chars>, builder: &mut String) {
-    for _ in 0..builder.chars().count() {
-        input.next();
-    }
-    builder.clear();
-}
-
-fn advance_one_and_pop(input: &mut MultiPeek<Chars>, builder: &mut String) {
-    input.next();
-    builder.pop();
-}
-
 #[cfg(test)]
 mod tests {
     use super::FinalToken::*;

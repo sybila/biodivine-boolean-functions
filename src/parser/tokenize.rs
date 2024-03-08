@@ -1,11 +1,11 @@
 use std::str::Chars;
 
 use itertools::{Itertools, MultiPeek};
-use regex::Regex;
 
 use crate::parser::error::TokenizeError;
 use crate::parser::error::TokenizeError::MissingClosingParenthesis;
 use crate::parser::structs::{FinalToken, IntermediateToken};
+use crate::parser::utils::SHOULD_END_LITERAL;
 use crate::parser::utils::{peek_until_n, pop_n_left, trim_whitespace_left};
 
 pub fn tokenize(input: &str) -> Result<Vec<FinalToken>, TokenizeError> {
@@ -20,9 +20,6 @@ fn tokenize_level(
     let mut buffer = String::new();
     let take_size = IntermediateToken::longest_token_len() + 1;
 
-    // TODO make regex lazy-static
-    let should_end_literal = Regex::new(r"[^-_a-zA-Z0-9]").unwrap();
-
     // trim whitespace in case of whitespace after opening parentesis
     trim_whitespace_left(input);
 
@@ -30,7 +27,7 @@ fn tokenize_level(
         let intermediate_token = IntermediateToken::try_from(buffer.as_str());
 
         match intermediate_token {
-            None => consume_while_literal(input, &mut result, &should_end_literal),
+            None => consume_while_literal(input, &mut result),
             Some(token) => {
                 let (final_token, pattern_length) = match token {
                     IntermediateToken::And { pattern } => {
@@ -130,16 +127,12 @@ fn consume_until_brace(
     Ok((FinalToken::Literal(literal_buffer), 0))
 }
 
-fn consume_while_literal(
-    input: &mut MultiPeek<Chars>,
-    result: &mut Vec<FinalToken>,
-    should_end_literal: &Regex,
-) {
+fn consume_while_literal(input: &mut MultiPeek<Chars>, result: &mut Vec<FinalToken>) {
     let mut literal_buffer: String = String::new();
     input.reset_peek();
 
     while let Some(c) = input.peek() {
-        if should_end_literal.is_match(&c.to_string()) {
+        if SHOULD_END_LITERAL.is_match(&c.to_string()) {
             break;
         }
 

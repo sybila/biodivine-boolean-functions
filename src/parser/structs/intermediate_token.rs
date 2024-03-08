@@ -1,5 +1,7 @@
 use itertools::Itertools;
-use regex::{Regex, RegexSet};
+use regex::RegexSet;
+
+use crate::parser::utils::LITERAL_IDENTIFIER;
 
 #[derive(PartialEq, Debug)]
 pub enum IntermediateToken<'a> {
@@ -126,7 +128,7 @@ impl<'a> IntermediateToken<'a> {
             format!(
                 r"(?i)^{}{}",
                 regex::escape(pattern),
-                if Regex::new(r"[-_a-zA-Z0-9]+").unwrap().is_match(pattern) {
+                if LITERAL_IDENTIFIER.is_match(pattern) {
                     "([^-_a-zA-Z0-9]|$)"
                 } else {
                     ""

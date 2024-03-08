@@ -1,9 +1,10 @@
 use std::str::Chars;
 
 use itertools::{Itertools, MultiPeek};
+use regex::Regex;
 
 use crate::parser::error::TokenizeError;
-use crate::parser::error::TokenizeError::{MissingClosingParenthesis, UnexpectedWhitespace};
+use crate::parser::error::TokenizeError::MissingClosingParenthesis;
 use crate::parser::token::IntermediateToken;
 
 #[derive(PartialEq, Debug)]
@@ -26,64 +27,61 @@ fn tokenize_level(
     is_top_level: bool,
 ) -> Result<Vec<FinalToken>, TokenizeError> {
     let mut result = vec![];
-
+    // TODO rename to buffer
     let mut builder = String::new();
+    let take_size = IntermediateToken::longest_token_len() + 1;
 
-    while let Some(c) = input.peek() {
-        // started parsing the next token
+    // TODO make regex lazy-static
+    let should_end_literal = Regex::new(r"[^-_a-zA-Z0-9]").unwrap();
 
-        // -1 for the char already there
+    trim_whitespace_left(input);
+    while peek_until_n(take_size, input, &mut builder) || !builder.is_empty() {
+        let intermediate_token = IntermediateToken::try_from(builder.as_str());
 
-        // if c.is_whitespace() {
-        //     if builder.is_empty() {
-        //         input.next();
-        //     } else {
-        //         // What is in builder isn't any token
-        //         for builder_c in builder.chars() {
-        //             result.push(Token::MaybeLiteral(builder_c));
-        //             input.next();
-        //         }
-        //         builder.clear();
-        //     }
-        //
-        //     continue;
-        // }
+        match intermediate_token {
+            None => {
+                let mut literal_buffer: String = String::new();
+                input.reset_peek();
 
-        builder.push(*c);
+                while let Some(c) = input.peek() {
+                    if should_end_literal.is_match(&c.to_string()) {
+                        break;
+                    }
 
-        let final_token = match IntermediateToken::try_from(builder.as_str()) {
-            // Did not match token and we just peeked whitespace
-            None if c.is_whitespace() => {
-                if builder.is_empty() || builder.chars().all(char::is_whitespace) {
-                    advance_all_build_and_clear(input, &mut builder);
-                    continue;
-                } else {
-                    return Err(UnexpectedWhitespace);
+                    literal_buffer.push(*c);
+                    input.next();
                 }
+
+                result.push(FinalToken::Literal(literal_buffer));
             }
-            // None => FinalToken::Literal(std::mem::take(&mut builder)),
-            // Did not match token and we did not just peek whitespace
-            None => FinalToken::Literal(builder.clone()),
             Some(token) => {
-                match token {
-                    IntermediateToken::And { .. } => FinalToken::And,
-                    IntermediateToken::Or { .. } => FinalToken::Or,
-                    IntermediateToken::Not { .. } => FinalToken::Not,
-                    IntermediateToken::ConstantTrue { .. } => FinalToken::ConstantTrue,
-                    IntermediateToken::ConstantFalse { .. } => FinalToken::ConstantFalse,
+                let (final_token, pattern_length) = match token {
+                    IntermediateToken::And { pattern } => {
+                        (FinalToken::And, pattern.chars().count())
+                    }
+                    IntermediateToken::Or { pattern } => (FinalToken::Or, pattern.chars().count()),
+                    IntermediateToken::Not { pattern } => {
+                        (FinalToken::Not, pattern.chars().count())
+                    }
+                    IntermediateToken::ConstantTrue { pattern } => {
+                        (FinalToken::ConstantTrue, pattern.chars().count())
+                    }
+                    IntermediateToken::ConstantFalse { pattern } => {
+                        (FinalToken::ConstantFalse, pattern.chars().count())
+                    }
                     IntermediateToken::ParenthesesStart => {
                         // move over from the initial `(`
-                        advance_one_and_pop(input, &mut builder);
+                        pop_n_left(&mut builder, input, 1);
 
                         let tokens = tokenize_level(input, false)?;
-                        FinalToken::Parentheses(tokens)
+                        (FinalToken::Parentheses(tokens), 0)
                     }
                     IntermediateToken::ParenthesesEnd => {
                         return if is_top_level {
                             Err(TokenizeError::UnexpectedClosingParenthesis)
                         } else {
                             // move over from the final `)`
-                            input.next();
+                            pop_n_left(&mut builder, input, 1);
 
                             Ok(result)
                         };
@@ -91,8 +89,10 @@ fn tokenize_level(
                     IntermediateToken::LiteralLongNameStart => {
                         // TODO maybe assert that builder is empty?
 
-                        // move over from the initial `{`
-                        advance_one_and_pop(input, &mut builder);
+                        // move over from the initial `{`, resetting peeking
+                        pop_n_left(&mut builder, input, 1);
+                        let mut literal_buffer: String = String::new();
+                        input.reset_peek();
 
                         while let Some(c) = input.peek() {
                             if c.to_string() == IntermediateToken::LITERAL_END_PATTERN {
@@ -101,22 +101,28 @@ fn tokenize_level(
                                 break;
                             }
 
-                            builder.push(*c);
+                            literal_buffer.push(*c);
+                            input.next();
                         }
 
-                        // FinalToken::Literal(std::mem::take(&mut builder))
                         // TODO return TokenizeError if builder is empty at the end
-                        FinalToken::Literal(builder.clone())
+                        (FinalToken::Literal(literal_buffer), 0)
                     }
                     IntermediateToken::LiteralLongNameEnd => {
                         return Err(TokenizeError::UnexpectedClosingCurlyBrace);
                     }
-                }
-            }
-        };
+                };
 
-        result.push(final_token);
-        advance_all_build_and_clear(input, &mut builder);
+                result.push(final_token);
+                pop_n_left(&mut builder, input, pattern_length);
+            }
+        }
+
+        // TODO try to reconcile this to not require resetting peeking after every iteration,
+        // TODO but to use what's in the buffer already
+        input.reset_peek();
+        builder.clear();
+        trim_whitespace_left(input);
     }
 
     if is_top_level {
@@ -124,6 +130,53 @@ fn tokenize_level(
     } else {
         Err(MissingClosingParenthesis)
     }
+}
+
+fn trim_whitespace_left(input: &mut MultiPeek<Chars>) {
+    while let Some(c) = input.peek() {
+        if !c.is_whitespace() {
+            break;
+        }
+
+        input.next();
+    }
+    input.reset_peek();
+}
+
+// https://stackoverflow.com/a/38447886
+/// Advances (i.e. calls .next()) `input` by `pop_count` characters, clears `pop_count` characters from the start of the `buffer`.
+fn pop_n_left(buffer: &mut String, input: &mut MultiPeek<Chars>, pop_count: usize) {
+    for _ in 0..pop_count {
+        input.next();
+    }
+
+    match buffer.char_indices().nth(pop_count) {
+        Some((pos, _)) => {
+            buffer.drain(..pos);
+        }
+        None => {
+            buffer.clear();
+        }
+    }
+}
+
+/// Returns `false` if if no characters were peeked from the `input` iterator, `true` otherwise.
+fn peek_until_n(n: usize, input: &mut MultiPeek<Chars>, buffer: &mut String) -> bool {
+    let mut did_read_anything = false;
+
+    while buffer.chars().count() < n {
+        let c = input.peek();
+
+        match c {
+            Some(c) => {
+                did_read_anything = true;
+                buffer.push(*c)
+            }
+            None => break,
+        }
+    }
+
+    did_read_anything
 }
 
 fn advance_all_build_and_clear(input: &mut MultiPeek<Chars>, builder: &mut String) {

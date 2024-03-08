@@ -59,10 +59,22 @@ fn priority_2_terminal(data: &[FinalToken]) -> Result<Expression<String>, ParseT
 #[cfg(test)]
 mod tests {
     use crate::expressions::Expression::{Constant, Literal};
+    use crate::parser::error::ParseTokensError::EmptySideOfOperator;
     use crate::parser::{tokenize, ParseError};
     use crate::traits::SemanticEq;
 
     use super::*;
+
+    #[test]
+    fn test_empty_nok() -> Result<(), ParseError> {
+        let input = tokenize("")?;
+        let actual = parse_tokens(&input);
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), EmptySideOfOperator);
+
+        Ok(())
+    }
 
     #[test]
     fn test_binaryand_ok() -> Result<(), ParseError> {

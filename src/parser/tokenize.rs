@@ -188,6 +188,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_empty_technicallyok() -> Result<(), TokenizeError> {
+        let input = "";
+
+        let actual = tokenize(input)?;
+        assert_eq!(actual, vec![]);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_charvar_ok() -> Result<(), TokenizeError> {
         let actual = tokenize("a")?;
         let expected = vec![Literal("a".to_string())];

@@ -597,4 +597,176 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_operator_boundary_andword_space_charvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a and b")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_nospace_charvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a andB")?;
+        let expected = vec![Literal("a".to_string()), Literal("andB".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_nospace_operatorvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a andBand b")?;
+        let expected = vec![
+            Literal("a".to_string()),
+            Literal("andBand".to_string()),
+            Literal("b".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_space_charvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a && b")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_nospace_charvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a &&b")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("b".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_nospace_operatorvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a &&B&& b")?;
+        let expected = vec![
+            Literal("a".to_string()),
+            And,
+            Literal("B".to_string()),
+            And,
+            Literal("b".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_space_underscorevar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a and _B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("_B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_nospace_underscorevar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a and_B")?;
+        let expected = vec![Literal("a".to_string()), Literal("and_B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_space_underscorevar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a && _B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("_B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_nospace_underscorevar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a &&_B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("_B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_space_dashvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a and -B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("-B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andword_nospace_dashvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a and-B")?;
+        let expected = vec![Literal("a".to_string()), Literal("and-B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_space_dashvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a && -B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("-B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_andlogic_nospace_dashvar_ok() -> Result<(), TokenizeError> {
+        let actual = tokenize("a &&-B")?;
+        let expected = vec![Literal("a".to_string()), And, Literal("-B".to_string())];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_boundary_false() -> Result<(), TokenizeError> {
+        let actual = tokenize("F and andF && False && andFALSE &&FALSE and FALSEand")?;
+        let expected = vec![
+            ConstantFalse,
+            And,
+            Literal("andF".to_string()),
+            And,
+            ConstantFalse,
+            And,
+            Literal("andFALSE".to_string()),
+            And,
+            ConstantFalse,
+            And,
+            Literal("FALSEand".to_string()),
+        ];
+
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
 }

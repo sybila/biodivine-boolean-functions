@@ -91,17 +91,24 @@ fn tokenize_level(
                         // move over from the initial `{`, resetting peeking
                         pop_n_left(&mut buffer, input, 1);
                         let mut literal_buffer: String = String::new();
+                        let mut did_hit_closing_brace = false;
                         input.reset_peek();
 
                         while let Some(c) = input.peek() {
                             if c.to_string() == IntermediateToken::LITERAL_END_PATTERN {
                                 // move over from the final `}`
                                 input.next();
+
+                                did_hit_closing_brace = true;
                                 break;
                             }
 
                             literal_buffer.push(*c);
                             input.next();
+                        }
+
+                        if !did_hit_closing_brace {
+                            return Err(TokenizeError::MissingClosingCurlyBrace);
                         }
 
                         // TODO return TokenizeError if builder is empty at the end

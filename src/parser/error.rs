@@ -7,6 +7,10 @@ pub enum TokenizeError {
     MissingClosingParenthesis,
     #[error("Unexpected `}}` encountered")]
     UnexpectedClosingCurlyBrace,
+    #[error("Missing `}}`")]
+    MissingClosingCurlyBrace,
+    #[error("Found literal with no name: `{{}}`")]
+    EmptyLiteralName,
     #[error("Unexpected whitespace encountered in the middle of operator")]
     UnexpectedWhitespace,
 }

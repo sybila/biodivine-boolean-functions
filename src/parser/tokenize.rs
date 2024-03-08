@@ -6,6 +6,7 @@ use regex::Regex;
 use crate::parser::error::TokenizeError;
 use crate::parser::error::TokenizeError::MissingClosingParenthesis;
 use crate::parser::structs::{FinalToken, IntermediateToken};
+use crate::parser::utils::{peek_until_n, pop_n_left, trim_whitespace_left};
 
 pub fn tokenize(input: &str) -> Result<Vec<FinalToken>, TokenizeError> {
     tokenize_level(&mut input.chars().multipeek(), true)

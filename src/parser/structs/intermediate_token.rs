@@ -148,7 +148,6 @@ impl<'a> IntermediateToken<'a> {
     fn from(pattern: &str) -> IntermediateToken {
         use IntermediateToken::*;
 
-        // TODO-done order by length of pattern, match prefix (maybe with regex and capture group)
         match pattern.to_lowercase().as_str() {
             Self::AND_PATTERN_BIT
             | Self::AND_PATTERN_LOGIC

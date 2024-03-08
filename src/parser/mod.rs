@@ -4,5 +4,5 @@ pub use tokenize::tokenize;
 
 mod error;
 mod parse;
-mod token;
+mod structs;
 mod tokenize;

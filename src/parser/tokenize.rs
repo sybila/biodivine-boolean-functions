@@ -5,18 +5,7 @@ use regex::Regex;
 
 use crate::parser::error::TokenizeError;
 use crate::parser::error::TokenizeError::MissingClosingParenthesis;
-use crate::parser::token::IntermediateToken;
-
-#[derive(PartialEq, Debug)]
-pub enum FinalToken {
-    And,
-    Or,
-    Not,
-    ConstantTrue,
-    ConstantFalse,
-    Literal(String),
-    Parentheses(Vec<FinalToken>),
-}
+use crate::parser::structs::{FinalToken, IntermediateToken};
 
 pub fn tokenize(input: &str) -> Result<Vec<FinalToken>, TokenizeError> {
     tokenize_level(&mut input.chars().multipeek(), true)
@@ -189,12 +178,12 @@ fn peek_until_n(n: usize, input: &mut MultiPeek<Chars>, buffer: &mut String) -> 
 
 #[cfg(test)]
 mod tests {
-    use super::FinalToken::*;
     use super::*;
     use crate::parser::error::TokenizeError::{
         EmptyLiteralName, MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace,
         UnexpectedClosingParenthesis,
     };
+    use crate::parser::structs::FinalToken::*;
 
     #[test]
     fn test_peek_n() {

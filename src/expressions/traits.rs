@@ -3,18 +3,16 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::expressions::Expression::{self, And, Constant, Literal, Not, Or};
-use crate::traits::{Evaluate, GatherLiterals, PowerSet, SemanticEq};
+use crate::parser::{parse_tokens, tokenize, ParseError};
+use crate::traits::{Evaluate, GatherLiterals, Parse, PowerSet, SemanticEq};
 
 impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TLiteral> {
     fn semantic_eq(&self, other: &Self) -> bool {
         let self_literals = self.gather_literals();
         let other_literals = other.gather_literals();
+        let literals_union = HashSet::from_iter(self_literals.union(&other_literals).cloned());
 
-        if self_literals != other_literals {
-            return false;
-        }
-
-        let all_options = Self::generate_power_set(self_literals);
+        let all_options = Self::generate_power_set(literals_union);
 
         all_options.into_iter().all(|literal_settings| {
             self.evaluate(&literal_settings) == other.evaluate(&literal_settings)
@@ -73,5 +71,14 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
             Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
             Not(ref x) => !x.evaluate(literal_values),
         }
+    }
+}
+
+impl Parse for Expression<String> {
+    fn from_str(input: &str) -> Result<Self, ParseError> {
+        let tokens = tokenize(input)?;
+        let parsed = parse_tokens(&tokens)?;
+
+        Ok(parsed)
     }
 }

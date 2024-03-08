@@ -1,3 +1,4 @@
+// TODO extend enum variants to carry position of error, code, impl position from errors
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum TokenizeError {
     #[error("Unexpected `)` encountered")]

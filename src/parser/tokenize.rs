@@ -83,10 +83,10 @@ fn tokenize_level(
 
 fn handle_parentheses(
     input: &mut MultiPeek<Chars>,
-    mut buffer: &mut String,
+    buffer: &mut String,
 ) -> Result<(FinalToken, usize), TokenizeError> {
     // move over from the initial `(`
-    pop_n_left(&mut buffer, input, 1);
+    pop_n_left(buffer, input, 1);
 
     let tokens = tokenize_level(input, false)?;
     Ok((FinalToken::Parentheses(tokens), 0))

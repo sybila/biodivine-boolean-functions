@@ -23,26 +23,14 @@ fn tokenize_level(
     // TODO make regex lazy-static
     let should_end_literal = Regex::new(r"[^-_a-zA-Z0-9]").unwrap();
 
+    // trim whitespace in case of whitespace after opening parentesis
     trim_whitespace_left(input);
+
     while peek_until_n(take_size, input, &mut buffer) || !buffer.is_empty() {
         let intermediate_token = IntermediateToken::try_from(buffer.as_str());
 
         match intermediate_token {
-            None => {
-                let mut literal_buffer: String = String::new();
-                input.reset_peek();
-
-                while let Some(c) = input.peek() {
-                    if should_end_literal.is_match(&c.to_string()) {
-                        break;
-                    }
-
-                    literal_buffer.push(*c);
-                    input.next();
-                }
-
-                result.push(FinalToken::Literal(literal_buffer));
-            }
+            None => consume_while_literal(input, &mut result, &should_end_literal),
             Some(token) => {
                 let (final_token, pattern_length) = match token {
                     IntermediateToken::And { pattern } => {
@@ -58,13 +46,7 @@ fn tokenize_level(
                     IntermediateToken::ConstantFalse { pattern } => {
                         (FinalToken::ConstantFalse, pattern.chars().count())
                     }
-                    IntermediateToken::ParenthesesStart => {
-                        // move over from the initial `(`
-                        pop_n_left(&mut buffer, input, 1);
-
-                        let tokens = tokenize_level(input, false)?;
-                        (FinalToken::Parentheses(tokens), 0)
-                    }
+                    IntermediateToken::ParenthesesStart => handle_parentheses(input, &mut buffer)?,
                     IntermediateToken::ParenthesesEnd => {
                         return if is_top_level {
                             Err(TokenizeError::UnexpectedClosingParenthesis)
@@ -76,35 +58,7 @@ fn tokenize_level(
                         };
                     }
                     IntermediateToken::LiteralLongNameStart => {
-                        // TODO maybe assert that builder is empty?
-
-                        // move over from the initial `{`, resetting peeking
-                        pop_n_left(&mut buffer, input, 1);
-                        let mut literal_buffer: String = String::new();
-                        let mut did_hit_closing_brace = false;
-                        input.reset_peek();
-
-                        while let Some(c) = input.peek() {
-                            if c.to_string() == IntermediateToken::LITERAL_END_PATTERN {
-                                // move over from the final `}`
-                                input.next();
-
-                                did_hit_closing_brace = true;
-                                break;
-                            }
-
-                            literal_buffer.push(*c);
-                            input.next();
-                        }
-
-                        if !did_hit_closing_brace {
-                            return Err(TokenizeError::MissingClosingCurlyBrace);
-                        }
-                        if literal_buffer.is_empty() {
-                            return Err(TokenizeError::EmptyLiteralName);
-                        }
-
-                        (FinalToken::Literal(literal_buffer), 0)
+                        consume_until_brace(input, &mut buffer)?
                     }
                     IntermediateToken::LiteralLongNameEnd => {
                         return Err(TokenizeError::UnexpectedClosingCurlyBrace);
@@ -130,120 +84,81 @@ fn tokenize_level(
     }
 }
 
-fn trim_whitespace_left(input: &mut MultiPeek<Chars>) {
+fn handle_parentheses(
+    input: &mut MultiPeek<Chars>,
+    mut buffer: &mut String,
+) -> Result<(FinalToken, usize), TokenizeError> {
+    // move over from the initial `(`
+    pop_n_left(&mut buffer, input, 1);
+
+    let tokens = tokenize_level(input, false)?;
+    Ok((FinalToken::Parentheses(tokens), 0))
+}
+
+fn consume_until_brace(
+    input: &mut MultiPeek<Chars>,
+    buffer: &mut String,
+) -> Result<(FinalToken, usize), TokenizeError> {
+    // TODO maybe assert that builder is empty?
+
+    // move over from the initial `{`, resetting peeking
+    pop_n_left(buffer, input, 1);
+    let mut literal_buffer: String = String::new();
+    let mut did_hit_closing_brace = false;
+    input.reset_peek();
+
     while let Some(c) = input.peek() {
-        if !c.is_whitespace() {
+        if c.to_string() == IntermediateToken::LITERAL_END_PATTERN {
+            // move over from the final `}`
+            input.next();
+
+            did_hit_closing_brace = true;
             break;
         }
 
+        literal_buffer.push(*c);
         input.next();
     }
+
+    if !did_hit_closing_brace {
+        return Err(TokenizeError::MissingClosingCurlyBrace);
+    }
+    if literal_buffer.is_empty() {
+        return Err(TokenizeError::EmptyLiteralName);
+    }
+
+    Ok((FinalToken::Literal(literal_buffer), 0))
+}
+
+fn consume_while_literal(
+    input: &mut MultiPeek<Chars>,
+    result: &mut Vec<FinalToken>,
+    should_end_literal: &Regex,
+) {
+    let mut literal_buffer: String = String::new();
     input.reset_peek();
-}
 
-// https://stackoverflow.com/a/38447886
-/// Advances (i.e. calls .next()) `input` by `pop_count` characters, clears `pop_count` characters from the start of the `buffer`.
-fn pop_n_left(buffer: &mut String, input: &mut MultiPeek<Chars>, pop_count: usize) {
-    for _ in 0..pop_count {
+    while let Some(c) = input.peek() {
+        if should_end_literal.is_match(&c.to_string()) {
+            break;
+        }
+
+        literal_buffer.push(*c);
         input.next();
     }
 
-    match buffer.char_indices().nth(pop_count) {
-        Some((pos, _)) => {
-            buffer.drain(..pos);
-        }
-        None => {
-            buffer.clear();
-        }
-    }
-}
-
-/// Returns `false` if if no characters were peeked from the `input` iterator, `true` otherwise.
-fn peek_until_n(n: usize, input: &mut MultiPeek<Chars>, buffer: &mut String) -> bool {
-    let mut did_read_anything = false;
-
-    while buffer.chars().count() < n {
-        let c = input.peek();
-
-        match c {
-            Some(c) => {
-                did_read_anything = true;
-                buffer.push(*c)
-            }
-            None => break,
-        }
-    }
-
-    did_read_anything
+    result.push(FinalToken::Literal(literal_buffer));
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::parser::error::TokenizeError::{
         EmptyLiteralName, MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace,
         UnexpectedClosingParenthesis,
     };
     use crate::parser::structs::FinalToken::*;
 
-    #[test]
-    fn test_peek_n() {
-        for input_size in 0..=10 {
-            let input = "a".repeat(input_size);
-            let mut buffer = String::new();
-
-            let mut input = input.chars().multipeek();
-
-            let target_peak = 6;
-            let did_read_anything = peek_until_n(target_peak, &mut input, &mut buffer);
-
-            assert_eq!(did_read_anything, input_size >= 1, "i: {input_size}");
-            assert_eq!(
-                buffer.chars().count(),
-                usize::min(input_size, target_peak),
-                "i: {input_size}"
-            );
-        }
-    }
-
-    #[test]
-    fn test_pop_from_start() {
-        let mut buffer = String::from("");
-        let input = buffer.clone();
-        let mut input = input.chars().multipeek();
-
-        pop_n_left(&mut buffer, &mut input, 3);
-        assert_eq!(&buffer, "");
-        assert_eq!(&input.join(""), "");
-
-        let mut buffer = String::from("a");
-        pop_n_left(&mut buffer, &mut input, 3);
-        let input = buffer.clone();
-        let mut input = input.chars().multipeek();
-        assert_eq!(&buffer, "");
-        assert_eq!(&input.join(""), "");
-
-        let mut buffer = String::from("ab");
-        pop_n_left(&mut buffer, &mut input, 3);
-        let input = buffer.clone();
-        let mut input = input.chars().multipeek();
-        assert_eq!(&buffer, "");
-        assert_eq!(&input.join(""), "");
-
-        let mut buffer = String::from("abc");
-        pop_n_left(&mut buffer, &mut input, 3);
-        let input = buffer.clone();
-        let mut input = input.chars().multipeek();
-        assert_eq!(&buffer, "");
-        assert_eq!(&input.join(""), "");
-
-        let mut buffer = String::from("abcd");
-        pop_n_left(&mut buffer, &mut input, 3);
-        let input = buffer.clone();
-        let mut input = input.chars().multipeek();
-        assert_eq!(&buffer, "d");
-        assert_eq!(&input.join(""), "d");
-    }
+    use super::*;
 
     #[test]
     fn test_charvar_ok() -> Result<(), TokenizeError> {

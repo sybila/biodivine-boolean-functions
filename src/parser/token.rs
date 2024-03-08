@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use regex::RegexSet;
+use regex::{Regex, RegexSet};
 
 #[derive(PartialEq, Debug)]
 pub enum IntermediateToken<'a> {
@@ -122,11 +122,17 @@ impl<'a> IntermediateToken<'a> {
         let input = Self::all_token_patterns_ordered_from_longest();
 
         // escape the pattern so that e.g. "^" is not treated as regex, but as a literal character for the And operation
-        let set = RegexSet::new(
-            input
-                .iter()
-                .map(|pattern| format!(r"(?i)^{}", regex::escape(pattern))),
-        )
+        let set = RegexSet::new(input.iter().map(|pattern| {
+            format!(
+                r"(?i)^{}{}",
+                regex::escape(pattern),
+                if Regex::new(r"[-_a-zA-Z0-9]+").unwrap().is_match(pattern) {
+                    "([^-_a-zA-Z0-9]|$)"
+                } else {
+                    ""
+                }
+            )
+        }))
         .unwrap();
 
         let pattern_or_no_match = set

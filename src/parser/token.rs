@@ -220,4 +220,15 @@ mod tests {
 
         assert!(!pattern.is_match(&builder))
     }
+
+    #[test]
+    #[should_panic]
+    fn test_from_panics() {
+        let input = "abcdefgh";
+
+        // test sanity
+        assert!(!IntermediateToken::all_token_patterns().contains(&input));
+
+        let _ = IntermediateToken::from(input);
+    }
 }

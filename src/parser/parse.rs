@@ -58,7 +58,7 @@ fn priority_2_terminal(data: &[FinalToken]) -> Result<Expression<String>, ParseT
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::Expression::Literal;
+    use crate::expressions::Expression::{Constant, Literal};
     use crate::parser::{tokenize, ParseError};
     use crate::traits::SemanticEq;
 
@@ -153,6 +153,23 @@ mod tests {
     }
 
     #[test]
+    fn test_parentheses_naryor_naryand_constants_ok() -> Result<(), ParseError> {
+        let input = tokenize("F | 0 | False | (T & 1 & True)")?;
+        let actual = parse_tokens(&input)?;
+        let expected = Expression::n_ary_or(vec![
+            Constant(false),
+            Constant(false),
+            Constant(false),
+            Expression::n_ary_and(vec![Constant(true), Constant(true), Constant(true)]),
+        ]);
+
+        assert!(actual.semantic_eq(&expected));
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_priorities_naryor_naryand_ok() -> Result<(), ParseError> {
         let input = tokenize("a | b | a & b & !c")?;
         let actual = parse_tokens(&input)?;
@@ -168,6 +185,17 @@ mod tests {
 
         assert!(actual.semantic_eq(&expected));
         assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_terminal_and_emptyside_nok() -> Result<(), ParseError> {
+        let input = tokenize("a & ")?;
+        let actual = parse_tokens(&input);
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), ParseTokensError::EmptySideOfOperator);
 
         Ok(())
     }

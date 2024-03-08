@@ -182,6 +182,9 @@ fn peek_until_n(n: usize, input: &mut MultiPeek<Chars>, buffer: &mut String) -> 
 mod tests {
     use super::FinalToken::*;
     use super::*;
+    use crate::parser::error::TokenizeError::{
+        MissingClosingCurlyBrace, UnexpectedClosingCurlyBrace, UnexpectedClosingParenthesis,
+    };
 
     #[test]
     fn test_peek_n() {
@@ -581,6 +584,116 @@ mod tests {
         ])])];
 
         assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nospace_parenthesesnotclosed_minimal_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nospace_parenthesesnotclosed_nested_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(((()()))");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_singlespace_parenthesesnotclosed_minimal_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize(" ( ");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_singlespace_parenthesesnotclosed_nested_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize(" ( ( ( ( ) ( ) ) )");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nospace_parenthesesnotopened_minimal_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize(")");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_nospace_parenthesesnotopened_nested_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("(((()))))");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_singlespace_parenthesesnotopened_minimal_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize(" ) ");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_singlespace_parenthesesnotopened_nested_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize(" ( ( ( ( ) ) ) ) )");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), UnexpectedClosingParenthesis);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_bracenotopened_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("}");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), UnexpectedClosingCurlyBrace);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_bracenotclosed_empty_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingCurlyBrace);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_bracenotclosed_nonempty_nok() -> Result<(), TokenizeError> {
+        let actual = tokenize("{abc&&");
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err(), MissingClosingCurlyBrace);
 
         Ok(())
     }

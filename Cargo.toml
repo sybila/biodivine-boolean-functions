@@ -3,10 +3,16 @@ name = "biodivine-boolean-functions"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+# will be used in Python to import the library (i.e. `import string_sum`)
+name = "biodivine_boolean_functions"
+# necessary to produce a shared library for Python to import from
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 thiserror = "1.0.50"
 itertools = "0.12.0"
 regex = "1.10.3"
 lazy_static = "1.4.0"
+
+pyo3 = { version = "0.21.0-beta.0", features = ["extension-module"] }

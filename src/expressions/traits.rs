@@ -1,6 +1,9 @@
 use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::hash::Hash;
+use std::ops::{BitAnd, BitOr};
+
+use itertools::Itertools;
 
 use crate::expressions::Expression::{self, And, Constant, Literal, Not, Or};
 use crate::parser::{parse_tokens, tokenize, ParseError};
@@ -70,6 +73,28 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
             And(ref values) => values.iter().all(|e| e.evaluate(literal_values)),
             Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
             Not(ref x) => !x.evaluate(literal_values),
+        }
+    }
+
+    fn evaluate_with_err(
+        &self,
+        literal_values: &HashMap<TLiteral, bool>,
+    ) -> Result<bool, TLiteral> {
+        match self {
+            Literal(ref t) => match literal_values.get(t) {
+                None => Err(t.clone()),
+                Some(valuation) => Ok(*valuation),
+            },
+            Constant(ref value) => Ok(*value),
+            Not(ref inner) => inner.evaluate_with_err(literal_values).map(|value| !value),
+            And(ref expressions) => expressions
+                .iter()
+                .map(|e| e.evaluate_with_err(literal_values))
+                .fold_ok(true, BitAnd::bitand),
+            Or(ref expressions) => expressions
+                .iter()
+                .map(|e| e.evaluate_with_err(literal_values))
+                .fold_ok(false, BitOr::bitor),
         }
     }
 }

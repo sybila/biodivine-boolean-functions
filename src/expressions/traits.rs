@@ -33,14 +33,16 @@ impl<TLiteral: Debug + Clone + Eq + Hash> GatherLiterals<TLiteral> for Expressio
             Constant(_) => current,
             Not(e) => e.gather_literals_rec(current),
             And(es) | Or(es) => {
-                let v = es
+                let collected = es
                     .iter()
                     .map(|e| e.gather_literals_rec(HashSet::new()))
                     .reduce(|mut acc, set| {
                         acc.extend(set);
                         acc
                     });
-                current.extend(v.unwrap());
+                if let Some(set) = collected {
+                    current.extend(set);
+                }
                 current
             }
         }

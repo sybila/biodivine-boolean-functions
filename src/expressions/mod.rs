@@ -1,11 +1,13 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use Expression::{And, Constant, Literal, Not, Or};
 
 pub mod traits;
 
+/// Immutable struct representing a boolean expression.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Expression<T>
 where
@@ -13,9 +15,9 @@ where
 {
     Literal(T),
     Constant(bool),
-    Not(Box<Expression<T>>),
-    And(Vec<Expression<T>>),
-    Or(Vec<Expression<T>>),
+    Not(Arc<Expression<T>>),
+    And(Vec<Arc<Expression<T>>>),
+    Or(Vec<Arc<Expression<T>>>),
 }
 
 impl<T: Debug + Clone + Eq + Hash> Expression<T> {
@@ -44,23 +46,23 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     }
 
     pub fn negate(e: Expression<T>) -> Expression<T> {
-        Not(Box::new(e))
+        Not(Arc::new(e))
     }
 
     pub fn binary_and(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        And(vec![e1, e2])
+        And(vec![Arc::new(e1), Arc::new(e2)])
     }
 
     pub fn n_ary_and(es: Vec<Expression<T>>) -> Expression<T> {
-        And(es)
+        And(es.into_iter().map(Arc::new).collect())
     }
 
     pub fn binary_or(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        Or(vec![e1, e2])
+        Or(vec![Arc::new(e1), Arc::new(e2)])
     }
 
     pub fn n_ary_or(es: Vec<Expression<T>>) -> Expression<T> {
-        Or(es)
+        Or(es.into_iter().map(Arc::new).collect())
     }
 
     // toNNF (Not (Bin And     l r)) = Bin Or  (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∧ ψ) = ¬ϕ ∨ ¬ψ
@@ -69,23 +71,23 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     // toNNF (Not (Not exp))         = toNNF exp
     // toNNF (Not exp)               = Not (toNNF exp)
     // toNNF leaf                    = leaf
-    pub fn to_nnf(self) -> Self {
+    pub fn to_nnf(&self) -> Self {
         match self {
-            Not(inner) => match *inner {
+            Not(inner) => match inner.as_ref().clone() {
                 And(expressions) => Or(expressions
                     .into_iter()
-                    .map(|e| Not(Box::new(e)).to_nnf())
+                    .map(|e| Arc::new(Not(e).to_nnf()))
                     .collect()),
                 Or(expressions) => And(expressions
                     .into_iter()
-                    .map(|e| Not(Box::new(e)).to_nnf())
+                    .map(|e| Arc::new(Not(e).to_nnf()))
                     .collect()),
                 Not(expression) => expression.to_nnf(),
                 expression => Expression::negate(expression.to_nnf()),
             },
-            And(expressions) => And(expressions.into_iter().map(|e| e.to_nnf()).collect()),
-            Or(expressions) => Or(expressions.into_iter().map(|e| e.to_nnf()).collect()),
-            leaf => leaf,
+            And(expressions) => And(expressions.iter().map(|e| Arc::new(e.to_nnf())).collect()),
+            Or(expressions) => Or(expressions.iter().map(|e| Arc::new(e.to_nnf())).collect()),
+            leaf => leaf.clone(),
         }
     }
 
@@ -95,17 +97,19 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     // | FAnd_wi phi1 phi2 → FAnd_wi (cnfc phi1) (cnfc phi2)
     // | phi → phi
     // end
-    pub fn to_cnf(self) -> Self {
+    pub fn to_cnf(&self) -> Self {
         let nnf = self.to_nnf();
 
         match nnf {
             Or(expressions) => expressions
                 .into_iter()
                 .map(|e| e.to_cnf())
-                // .rev()
                 .reduce(|acc, e| Expression::distribute(acc, e))
                 .unwrap(),
-            And(expressions) => And(expressions.into_iter().map(|e| e.to_cnf()).collect()),
+            And(expressions) => And(expressions
+                .into_iter()
+                .map(|e| Arc::new(e.to_cnf()))
+                .collect()),
             expression => expression,
         }
     }
@@ -120,11 +124,11 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         match (first, other) {
             (And(expressions), other) => And(expressions
                 .into_iter()
-                .map(|e| Expression::distribute(e, other.clone()))
+                .map(|e| Arc::new(Expression::distribute(e.as_ref().clone(), other.clone())))
                 .collect()),
             (other, And(expressions)) => And(expressions
                 .into_iter()
-                .map(|e| Expression::distribute(other.clone(), e))
+                .map(|e| Arc::new(Expression::distribute(other.clone(), e.as_ref().clone())))
                 .collect()),
             (expression1, expression2) => Expression::binary_or(expression1, expression2),
         }

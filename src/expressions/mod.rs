@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
@@ -143,12 +144,33 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
             Or(es) => !es.iter().any(|e| e.is_and()) && es.iter().all(|e| e.is_cnf()),
         }
     }
+
+    pub fn rename_literals(&self, mapping: &HashMap<T, T>) -> Self {
+        match self {
+            Literal(name) => {
+                let new = mapping.get(name).unwrap_or(name);
+                Literal(new.clone())
+            }
+            Constant(value) => Constant(*value),
+            Not(inner) => Expression::negate(inner.as_ref().clone().rename_literals(mapping)),
+            And(expressions) => And(expressions
+                .iter()
+                .map(|e| Arc::new(e.as_ref().clone().rename_literals(mapping)))
+                .collect()),
+            Or(expressions) => Or(expressions
+                .iter()
+                .map(|e| Arc::new(e.as_ref().clone().rename_literals(mapping)))
+                .collect()),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     #[allow(unused_imports)] // false positive, no idea why
-    use crate::expressions::Expression::{self, Literal};
+    use crate::expressions::Expression::{self, Constant, Literal};
     #[allow(unused_imports)] // false positive, probably because of usage in macros?
     use crate::traits::SemanticEq;
 
@@ -355,5 +377,34 @@ mod tests {
 
         assert!(nested.is_cnf());
         assert!(leveled.is_cnf());
+    }
+
+    #[test]
+    fn test_rename_literals_ok() {
+        let mut mapping = HashMap::new();
+        mapping.insert("a", "1");
+        mapping.insert("b", "2");
+        mapping.insert("c", "3");
+        mapping.insert("d", "4");
+        mapping.insert("e", "5");
+
+        let input = Expression::n_ary_or(vec![
+            Literal("a"),
+            Literal("b"),
+            Expression::binary_and(Literal("c"), Literal("d")),
+            Constant(true),
+            Expression::negate(Literal("a")),
+        ]);
+
+        let actual = input.rename_literals(&mapping);
+        let expected = Expression::n_ary_or(vec![
+            Literal("1"),
+            Literal("2"),
+            Expression::binary_and(Literal("3"), Literal("4")),
+            Constant(true),
+            Expression::negate(Literal("1")),
+        ]);
+
+        assert_eq!(actual, expected)
     }
 }

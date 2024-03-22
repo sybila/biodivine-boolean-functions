@@ -16,6 +16,7 @@ env:
   # spontaneously break after a few years.
   # Make sure to update this from time to time.
   RUST_VERSION: "1.72.0"
+  PYTHON_VERSION: "3.12"
 jobs:
   # Checks syntax formatting.
   fmt:
@@ -82,9 +83,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: x64
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
+      - run: |
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov
+          python3 -m venv venv
+          ./venv/bin/pip3 install -r ./scripts/dev_requirements.txt
       # Install action using cargo-binstall, which is faster because we don't have to compile tarpaulin every time.
       - uses: taiki-e/install-action@v2
         with:

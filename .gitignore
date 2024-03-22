@@ -1,3 +1,11 @@
+# Rust related
 /target
 /Cargo.lock
-/.idea/
+
+# Python related
+.env
+.python-version
+venv
+
+# Dev related
+.idea/

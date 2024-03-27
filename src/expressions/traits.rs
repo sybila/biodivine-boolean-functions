@@ -61,11 +61,11 @@ impl<TLiteral: Debug + Clone + Eq + Hash> PowerSet<TLiteral> for Expression<TLit
 impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLiteral> {
     fn evaluate(&self, literal_values: &HashMap<TLiteral, bool>) -> bool {
         match self {
-            Literal(ref t) => *literal_values.get(t).unwrap_or(&false),
-            Constant(ref value) => *value,
-            And(ref values) => values.iter().all(|e| e.evaluate(literal_values)),
-            Or(ref values) => values.iter().any(|e| e.evaluate(literal_values)),
-            Not(ref x) => !x.evaluate(literal_values),
+            Literal(t) => *literal_values.get(t).unwrap_or(&false),
+            Constant(value) => *value,
+            And(values) => values.iter().all(|e| e.evaluate(literal_values)),
+            Or(values) => values.iter().any(|e| e.evaluate(literal_values)),
+            Not(x) => !x.evaluate(literal_values),
         }
     }
 
@@ -74,17 +74,17 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
         literal_values: &HashMap<TLiteral, bool>,
     ) -> Result<bool, TLiteral> {
         match self {
-            Literal(ref t) => match literal_values.get(t) {
+            Literal(t) => match literal_values.get(t) {
                 None => Err(t.clone()),
                 Some(valuation) => Ok(*valuation),
             },
-            Constant(ref value) => Ok(*value),
-            Not(ref inner) => inner.evaluate_with_err(literal_values).map(|value| !value),
-            And(ref expressions) => expressions
+            Constant(value) => Ok(*value),
+            Not(inner) => inner.evaluate_with_err(literal_values).map(|value| !value),
+            And(expressions) => expressions
                 .iter()
                 .map(|e| e.evaluate_with_err(literal_values))
                 .fold_ok(true, BitAnd::bitand),
-            Or(ref expressions) => expressions
+            Or(expressions) => expressions
                 .iter()
                 .map(|e| e.evaluate_with_err(literal_values))
                 .fold_ok(false, BitOr::bitor),

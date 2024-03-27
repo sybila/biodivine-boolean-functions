@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::sync::Arc;
 
 use crate::expressions::Expression;
 use crate::parser::error::ParseTokensError;
@@ -14,8 +15,8 @@ fn priority_0_parse_or(data: &[FinalToken]) -> Result<Expression<String>, ParseT
         .fold_ok(None::<Expression<String>>, |acc, item| match acc {
             None => Some(item),
             Some(Expression::Or(mut es)) => {
-                es.push(item);
-                Some(Expression::n_ary_or(es))
+                es.push(Arc::new(item));
+                Some(Expression::Or(es))
             }
             Some(previous) => Some(Expression::n_ary_or(vec![previous, item])),
         })?
@@ -28,8 +29,8 @@ fn priority_1_parse_and(data: &[FinalToken]) -> Result<Expression<String>, Parse
         .fold_ok(None::<Expression<String>>, |acc, item| match acc {
             None => Some(item),
             Some(Expression::And(mut es)) => {
-                es.push(item);
-                Some(Expression::n_ary_and(es))
+                es.push(Arc::new(item));
+                Some(Expression::And(es))
             }
             Some(previous) => Some(Expression::n_ary_and(vec![previous, item])),
         })?

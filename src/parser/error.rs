@@ -34,3 +34,16 @@ pub enum ParseError {
 }
 
 pub const EOL_VICINITY: &str = "EOL";
+
+#[cfg(feature = "python")]
+mod bindings {
+    use super::ParseError;
+    use pyo3::exceptions::PyRuntimeError;
+    use pyo3::PyErr;
+
+    impl From<ParseError> for PyErr {
+        fn from(err: ParseError) -> PyErr {
+            PyRuntimeError::new_err(err.to_string())
+        }
+    }
+}

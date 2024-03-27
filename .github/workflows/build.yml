@@ -15,7 +15,9 @@ env:
   # A fixed version used for testing, so that the builds don't
   # spontaneously break after a few years.
   # Make sure to update this from time to time.
-  RUST_VERSION: "1.72.0"
+  RUST_VERSION: "1.77.0"
+  PYTHON_VERSION: "3.12"
+
 jobs:
   # Checks syntax formatting.
   fmt:
@@ -24,7 +26,7 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -39,7 +41,7 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -53,7 +55,7 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -68,7 +70,7 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -78,10 +80,10 @@ jobs:
   # Compute code coverage
   codecov:
     needs: test
-    name: Code coverage
+    name: Rust code coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -89,9 +91,12 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-tarpaulin
-      - run: cargo tarpaulin --verbose --lib --examples --all-features --out xml
+      # In PyO3 projects, `--no-dead-code` and `--engine llvm` are preferred. Might be a bug, might
+      # just be some weirdness in low-level build toolchains. See the discussion at:
+      # https://github.com/xd009642/tarpaulin/issues/1092
+      - run: cargo tarpaulin --no-dead-code --engine llvm --verbose --lib --examples --all-features --out xml
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Archive code coverage results
@@ -99,3 +104,25 @@ jobs:
         with:
           name: code-coverage-report
           path: cobertura.xml
+
+  # Build the python package (the Python part is untested for now).
+  maturin:
+    needs: check
+    name: Maturin build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - name: Setup Python.
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: x64
+      - name: Run tests.
+        run: |
+          python3 -m venv venv
+          source ./venv/bin/activate
+          ./venv/bin/pip3 install -r ./scripts/dev_requirements.txt      
+          maturin develop

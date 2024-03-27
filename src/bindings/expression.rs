@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
-
-use pyo3::prelude::{pyclass, pymethods, PyAny, PyResult};
+use pyo3::prelude::{pyclass, pymethods, PyAny, PyAnyMethods, PyResult};
 use pyo3::types::PyDict;
+use pyo3::Bound;
+use std::collections::{HashMap, HashSet};
 
 use crate::bindings::error::PythonExpressionError;
 use crate::bindings::error::PythonExpressionError::UnknownVariableWhileEvaluating;
@@ -17,7 +17,7 @@ pub struct PythonExpression {
 #[pymethods]
 impl PythonExpression {
     #[new]
-    fn py_new(value: &PyAny) -> PyResult<Self> {
+    fn py_new(value: Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(expression) = value.extract::<Self>() {
             return Ok(expression);
         }
@@ -44,7 +44,7 @@ impl PythonExpression {
     }
 
     /// Throws an exception when a variable is encountered that isn't found in the dictionary.
-    pub fn evaluate_nonsafe(&self, literal_values: &PyDict) -> PyResult<bool> {
+    pub fn evaluate_nonsafe(&self, literal_values: Bound<'_, PyDict>) -> PyResult<bool> {
         let hashmap: HashMap<String, bool> = literal_values.extract()?;
 
         Ok(self
@@ -54,7 +54,7 @@ impl PythonExpression {
     }
 
     /// Variables not in the dictionary default to false.
-    pub fn evaluate_safe(&self, literal_values: &PyDict) -> PyResult<bool> {
+    pub fn evaluate_safe(&self, literal_values: Bound<'_, PyDict>) -> PyResult<bool> {
         let hashmap: HashMap<String, bool> = literal_values.extract()?;
 
         Ok(self.root.evaluate(&hashmap))

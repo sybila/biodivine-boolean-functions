@@ -1,10 +1,11 @@
 use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::{PyAny, PyErr};
+use pyo3::prelude::{PyAnyMethods, PyTypeMethods};
+use pyo3::{Bound, PyAny, PyErr};
 
 #[derive(Debug, thiserror::Error)]
-pub enum PythonExpressionError<'a> {
+pub enum PythonExpressionError<'py> {
     #[error("Expected a string to parse from, got {} instead", if let Ok(name) =.value.get_type().qualname() {name} else { "UnknownType".to_string() })]
-    UnexpectedConstructorArgument { value: &'a PyAny },
+    UnexpectedConstructorArgument { value: Bound<'py, PyAny> },
     #[error("Encountered unknown variable while evaluating: {name}")]
     UnknownVariableWhileEvaluating { name: String },
     #[error("")]

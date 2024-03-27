@@ -76,11 +76,11 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         match self {
             Not(inner) => match inner.as_ref() {
                 And(expressions) => Or(expressions
-                    .into_iter()
+                    .iter()
                     .map(|e| Arc::new(Not(e.clone()).to_nnf()))
                     .collect()),
                 Or(expressions) => And(expressions
-                    .into_iter()
+                    .iter()
                     .map(|e| Arc::new(Not(e.clone()).to_nnf()))
                     .collect()),
                 Not(expression) => expression.to_nnf(),

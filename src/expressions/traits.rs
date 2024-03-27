@@ -24,26 +24,17 @@ impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TL
 }
 
 impl<TLiteral: Debug + Clone + Eq + Hash> GatherLiterals<TLiteral> for Expression<TLiteral> {
-    fn gather_literals_rec(&self, mut current: HashSet<TLiteral>) -> HashSet<TLiteral> {
+    fn gather_literals_rec(&self, current: &mut HashSet<TLiteral>) {
         match self {
             Literal(l) => {
                 current.insert(l.clone());
-                current
             }
-            Constant(_) => current,
+            Constant(_) => (),
             Not(e) => e.gather_literals_rec(current),
             And(es) | Or(es) => {
-                let collected = es
-                    .iter()
-                    .map(|e| e.gather_literals_rec(HashSet::new()))
-                    .reduce(|mut acc, set| {
-                        acc.extend(set);
-                        acc
-                    });
-                if let Some(set) = collected {
-                    current.extend(set);
+                for e in es {
+                    e.gather_literals_rec(current);
                 }
-                current
             }
         }
     }

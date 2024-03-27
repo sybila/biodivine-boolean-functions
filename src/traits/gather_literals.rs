@@ -4,8 +4,10 @@ use std::hash::Hash;
 
 pub trait GatherLiterals<TLiteral: Debug + Clone + Eq + Hash> {
     fn gather_literals(&self) -> HashSet<TLiteral> {
-        self.gather_literals_rec(HashSet::new())
+        let mut result = HashSet::new();
+        self.gather_literals_rec(&mut result);
+        result
     }
 
-    fn gather_literals_rec(&self, current: HashSet<TLiteral>) -> HashSet<TLiteral>;
+    fn gather_literals_rec(&self, current: &mut HashSet<TLiteral>);
 }

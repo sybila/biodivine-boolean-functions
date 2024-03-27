@@ -80,24 +80,13 @@ jobs:
   # Compute code coverage
   codecov:
     needs: test
-    name: Code coverage
+    name: Rust code coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          architecture: x64
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: |
-          rustup component add llvm-tools-preview
-          cargo install cargo-llvm-cov
-          python3 -m venv venv
-          ./venv/bin/pip3 install -r ./scripts/dev_requirements.txt
-          source ./venv/bin/activate
-          maturin develop
       # Install action using cargo-binstall, which is faster because we don't have to compile tarpaulin every time.
       - uses: taiki-e/install-action@v2
         with:
@@ -112,3 +101,25 @@ jobs:
         with:
           name: code-coverage-report
           path: cobertura.xml
+
+  # Build the python package (the Python part is untested for now).
+  maturin:
+    needs: check
+    name: Maturin build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - name: Setup Python.
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: x64
+      - name: Run tests.
+        run: |
+          python3 -m venv venv
+          ./venv/bin/activate
+          ./venv/bin/pip3 install -r dev-requirements.txt      
+          maturin develop

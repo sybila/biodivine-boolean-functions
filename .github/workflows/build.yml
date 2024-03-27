@@ -91,7 +91,10 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-tarpaulin
-      - run: cargo tarpaulin --verbose --lib --examples --all-features --out xml
+      # In PyO3 projects, `--no-dead-code` and `--engine llvm` are preferred. Might be a bug, might
+      # just be some weirdness in low-level build toolchains. See the discussion at:
+      # https://github.com/xd009642/tarpaulin/issues/1092
+      - run: cargo tarpaulin --no-dead-code --engine llvm --verbose --lib --examples --all-features --out xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
         with:

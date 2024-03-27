@@ -74,14 +74,14 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     // toNNF leaf                    = leaf
     pub fn to_nnf(&self) -> Self {
         match self {
-            Not(inner) => match inner.as_ref().clone() {
+            Not(inner) => match inner.as_ref() {
                 And(expressions) => Or(expressions
                     .into_iter()
-                    .map(|e| Arc::new(Not(e).to_nnf()))
+                    .map(|e| Arc::new(Not(e.clone()).to_nnf()))
                     .collect()),
                 Or(expressions) => And(expressions
                     .into_iter()
-                    .map(|e| Arc::new(Not(e).to_nnf()))
+                    .map(|e| Arc::new(Not(e.clone()).to_nnf()))
                     .collect()),
                 Not(expression) => expression.to_nnf(),
                 expression => Expression::negate(expression.to_nnf()),
@@ -152,14 +152,14 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
                 Literal(new.clone())
             }
             Constant(value) => Constant(*value),
-            Not(inner) => Expression::negate(inner.as_ref().clone().rename_literals(mapping)),
+            Not(inner) => Expression::negate(inner.as_ref().rename_literals(mapping)),
             And(expressions) => And(expressions
                 .iter()
-                .map(|e| Arc::new(e.as_ref().clone().rename_literals(mapping)))
+                .map(|e| Arc::new(e.as_ref().rename_literals(mapping)))
                 .collect()),
             Or(expressions) => Or(expressions
                 .iter()
-                .map(|e| Arc::new(e.as_ref().clone().rename_literals(mapping)))
+                .map(|e| Arc::new(e.as_ref().rename_literals(mapping)))
                 .collect()),
         }
     }

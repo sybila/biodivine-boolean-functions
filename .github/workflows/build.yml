@@ -120,6 +120,6 @@ jobs:
       - name: Run tests.
         run: |
           python3 -m venv venv
-          ./venv/bin/activate
+          source ./venv/bin/activate
           ./venv/bin/pip3 install -r dev-requirements.txt      
           maturin develop

@@ -1,6 +1,3 @@
-use pyo3::exceptions::PyRuntimeError;
-use pyo3::PyErr;
-
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum TokenizeError {
     #[error("Unexpected `)` encountered on position {position} near '{vicinity}'")]
@@ -38,8 +35,15 @@ pub enum ParseError {
 
 pub const EOL_VICINITY: &str = "EOL";
 
-impl From<ParseError> for PyErr {
-    fn from(err: ParseError) -> PyErr {
-        PyRuntimeError::new_err(err.to_string())
+#[cfg(feature = "python")]
+mod bindings {
+    use super::ParseError;
+    use pyo3::exceptions::PyRuntimeError;
+    use pyo3::PyErr;
+
+    impl From<ParseError> for PyErr {
+        fn from(err: ParseError) -> PyErr {
+            PyRuntimeError::new_err(err.to_string())
+        }
     }
 }

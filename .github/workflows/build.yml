@@ -124,5 +124,5 @@ jobs:
         run: |
           python3 -m venv venv
           source ./venv/bin/activate
-          ./venv/bin/pip3 install -r dev-requirements.txt      
+          ./venv/bin/pip3 install -r ./scripts/dev_requirements.txt      
           maturin develop

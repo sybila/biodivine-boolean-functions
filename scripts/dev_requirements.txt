@@ -1,3 +1,5 @@
+# Some of these are not needed yet, but will be
+# used later once we add some basic tests on the Python side.
 pytest==8.1.1
 pytest-cov==4.1.0
 maturin==1.5.0

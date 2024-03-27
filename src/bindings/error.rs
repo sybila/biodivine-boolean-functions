@@ -1,4 +1,4 @@
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::exceptions::{PyKeyError, PyTypeError};
 use pyo3::prelude::{PyAnyMethods, PyTypeMethods};
 use pyo3::{Bound, PyAny, PyErr};
 
@@ -28,7 +28,7 @@ impl<'a> From<PythonExpressionError<'a>> for PyErr {
             UnexpectedConstructorArgument { .. } | UnexpectedTypeOfArgument { .. } => {
                 PyTypeError::new_err(err.to_string())
             }
-            UnknownVariableWhileEvaluating { .. } => PyValueError::new_err(err.to_string()),
+            UnknownVariableWhileEvaluating { .. } => PyKeyError::new_err(err.to_string()),
         }
     }
 }

@@ -43,7 +43,8 @@ impl PythonExpression {
         self.root.is_cnf()
     }
 
-    /// Throws an exception when a variable is encountered that isn't found in the dictionary.
+    /// Throws a `KeyError` when a variable is encountered that isn't found among
+    /// the given `literal_values`.
     pub fn evaluate_nonsafe(&self, literal_values: Bound<'_, PyDict>) -> PyResult<bool> {
         let hashmap: HashMap<String, bool> = literal_values.extract()?;
 

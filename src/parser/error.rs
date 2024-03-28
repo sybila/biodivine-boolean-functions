@@ -1,4 +1,5 @@
-#[derive(Debug, thiserror::Error, PartialEq)]
+// PartialEq and Eq is here due to checks in tests
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum TokenizeError {
     #[error("Unexpected `)` encountered on position {position} near '{vicinity}'")]
     UnexpectedClosingParenthesis { position: usize, vicinity: String },

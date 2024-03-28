@@ -12,6 +12,7 @@ pub enum PythonExpressionError<'py> {
     UnexpectedTypeOfArgument,
 }
 
+// TODO: maybe full Eq with checking pointer equality for
 impl<'a> PartialEq for PythonExpressionError<'a> {
     fn eq(&self, other: &Self) -> bool {
         use std::mem::discriminant;

@@ -5,13 +5,27 @@ use pyo3::Bound;
 
 use crate::bindings::error::PythonExpressionError;
 use crate::bindings::error::PythonExpressionError::UnknownVariableWhileEvaluating;
-use crate::expressions::Expression as RustExpression;
+use crate::expressions::{Expression as RustExpression, ExpressionNode};
 use crate::traits::{Evaluate, GatherLiterals, Parse, SemanticEq};
 
 #[pyclass(frozen)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PythonExpression {
     root: RustExpression<String>,
+}
+
+impl From<RustExpression<String>> for PythonExpression {
+    fn from(value: RustExpression<String>) -> Self {
+        PythonExpression::new(value)
+    }
+}
+
+impl From<PythonExpression> for RustExpression<String> {
+    fn from(value: PythonExpression) -> Self {
+        // We can safely clone here because this only increases
+        // the reference count of the root expression.
+        value.root.clone()
+    }
 }
 
 #[pymethods]
@@ -89,47 +103,41 @@ impl PythonExpression {
     // TODO maybe allow numeric booleans?
     #[staticmethod]
     pub fn mk_constant(value: bool) -> PythonExpression {
-        Self::new(RustExpression::Constant(value))
+        Self::new(ExpressionNode::Constant(value).into())
     }
 
     #[staticmethod]
     pub fn mk_literal(name: String) -> PythonExpression {
-        Self::new(RustExpression::Literal(name))
+        Self::new(ExpressionNode::Literal(name).into())
     }
 
     #[staticmethod]
     pub fn mk_not(expression: &PythonExpression) -> PythonExpression {
-        Self::new(RustExpression::negate(expression.root.clone()))
+        Self::new(RustExpression::negate(&expression.root))
     }
 
     #[staticmethod]
     pub fn mk_and_binary(left: &PythonExpression, right: &PythonExpression) -> PythonExpression {
-        Self::new(RustExpression::binary_and(
-            left.root.clone(),
-            right.root.clone(),
-        ))
+        Self::new(RustExpression::binary_and(&left.root, &right.root))
     }
 
     #[staticmethod]
     pub fn mk_and_n_ary(expressions: Vec<PythonExpression>) -> PythonExpression {
-        Self::new(RustExpression::n_ary_and(
-            expressions.into_iter().map(|e| e.root).collect(),
-        ))
+        Self::new(RustExpression::n_ary_and(&Vec::from_iter(
+            expressions.into_iter().map(Into::into),
+        )))
     }
 
     #[staticmethod]
     pub fn mk_or_binary(left: &PythonExpression, right: &PythonExpression) -> PythonExpression {
-        Self::new(RustExpression::binary_or(
-            left.root.clone(),
-            right.root.clone(),
-        ))
+        Self::new(RustExpression::binary_or(&left.root, &right.root))
     }
 
     #[staticmethod]
     pub fn mk_or_n_ary(expressions: Vec<PythonExpression>) -> PythonExpression {
-        Self::new(RustExpression::n_ary_or(
-            expressions.into_iter().map(|e| e.root).collect(),
-        ))
+        Self::new(RustExpression::n_ary_or(&Vec::from_iter(
+            expressions.into_iter().map(Into::into),
+        )))
     }
 
     pub fn __str__(&self) -> String {

@@ -1,69 +1,84 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::Deref;
 use std::sync::Arc;
 
-use Expression::{And, Constant, Literal, Not, Or};
+use ExpressionNode::{And, Constant, Literal, Not, Or};
 
 pub mod traits;
 
-/// Immutable struct representing a boolean expression.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Expression<T>
+pub enum ExpressionNode<T>
 where
     T: Debug + Clone + Eq + Hash,
 {
     Literal(T),
     Constant(bool),
-    Not(Arc<Expression<T>>),
-    And(Vec<Arc<Expression<T>>>),
-    Or(Vec<Arc<Expression<T>>>),
+    Not(Expression<T>),
+    And(Vec<Expression<T>>),
+    Or(Vec<Expression<T>>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Expression<T>(Arc<ExpressionNode<T>>)
+where
+    T: Debug + Clone + Eq + Hash;
+
+impl<T: Debug + Clone + Eq + Hash> From<ExpressionNode<T>> for Expression<T> {
+    fn from(value: ExpressionNode<T>) -> Self {
+        Expression(Arc::new(value))
+    }
 }
 
 impl<T: Debug + Clone + Eq + Hash> Expression<T> {
+    pub fn node(&self) -> &ExpressionNode<T> {
+        self.0.as_ref()
+    }
+
     pub fn is_literal(&self) -> bool {
-        match self {
-            &Literal(_) => true,
-            Not(maybe_literal) => maybe_literal.is_literal(),
+        match self.node() {
+            Literal(_) => true,
+            Not(maybe_literal) => {
+                matches!(maybe_literal.node(), Literal(..))
+            }
             _ => false,
         }
     }
 
     pub fn is_constant(&self) -> bool {
-        matches!(self, Constant(_))
+        matches!(self.node(), Constant(_))
     }
 
     pub fn is_not(&self) -> bool {
-        matches!(self, Not(_))
+        matches!(self.node(), Not(_))
     }
 
     pub fn is_and(&self) -> bool {
-        matches!(self, And(_))
+        matches!(self.node(), And(_))
     }
 
     pub fn is_or(&self) -> bool {
-        matches!(self, Or(_))
+        matches!(self.node(), Or(_))
     }
 
-    pub fn negate(e: Expression<T>) -> Expression<T> {
-        Not(Arc::new(e))
+    pub fn negate(e: &Expression<T>) -> Expression<T> {
+        Not(e.clone()).into()
     }
 
-    pub fn binary_and(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        And(vec![Arc::new(e1), Arc::new(e2)])
+    pub fn binary_and(e1: &Expression<T>, e2: &Expression<T>) -> Expression<T> {
+        And(vec![e1.clone(), e2.clone()]).into()
     }
 
-    pub fn n_ary_and(es: Vec<Expression<T>>) -> Expression<T> {
-        And(es.into_iter().map(Arc::new).collect())
+    pub fn n_ary_and(es: &[Expression<T>]) -> Expression<T> {
+        And(es.to_vec()).into()
     }
 
-    pub fn binary_or(e1: Expression<T>, e2: Expression<T>) -> Expression<T> {
-        Or(vec![Arc::new(e1), Arc::new(e2)])
+    pub fn binary_or(e1: &Expression<T>, e2: &Expression<T>) -> Expression<T> {
+        Or(vec![e1.clone(), e2.clone()]).into()
     }
 
-    pub fn n_ary_or(es: Vec<Expression<T>>) -> Expression<T> {
-        Or(es.into_iter().map(Arc::new).collect())
+    pub fn n_ary_or(es: &[Expression<T>]) -> Expression<T> {
+        Or(es.to_vec()).into()
     }
 
     // toNNF (Not (Bin And     l r)) = Bin Or  (toNNF (Not l)) (toNNF (Not r))  -- ¬(ϕ ∧ ψ) = ¬ϕ ∨ ¬ψ
@@ -73,22 +88,16 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     // toNNF (Not exp)               = Not (toNNF exp)
     // toNNF leaf                    = leaf
     pub fn to_nnf(&self) -> Self {
-        match self {
-            Not(inner) => match inner.as_ref() {
-                And(expressions) => Or(expressions
-                    .iter()
-                    .map(|e| Arc::new(Not(e.clone()).to_nnf()))
-                    .collect()),
-                Or(expressions) => And(expressions
-                    .iter()
-                    .map(|e| Arc::new(Not(e.clone()).to_nnf()))
-                    .collect()),
-                Not(expression) => expression.to_nnf(),
-                expression => Expression::negate(expression.to_nnf()),
+        match self.node() {
+            Not(inner) => match inner.node() {
+                And(es) => Or(es.iter().map(|e| Expression::negate(e).to_nnf()).collect()).into(),
+                Or(es) => And(es.iter().map(|e| Expression::negate(e).to_nnf()).collect()).into(),
+                Not(e) => e.to_nnf(),
+                _leaf => self.clone(), // TODO: Should we propagate negation to constants?
             },
-            And(expressions) => And(expressions.iter().map(|e| Arc::new(e.to_nnf())).collect()),
-            Or(expressions) => Or(expressions.iter().map(|e| Arc::new(e.to_nnf())).collect()),
-            leaf => leaf.clone(),
+            And(es) => And(es.iter().map(|e| e.to_nnf()).collect()).into(),
+            Or(es) => Or(es.iter().map(|e| e.to_nnf()).collect()).into(),
+            _leaf => self.clone(),
         }
     }
 
@@ -101,17 +110,14 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     pub fn to_cnf(&self) -> Self {
         let nnf = self.to_nnf();
 
-        match nnf {
-            Or(expressions) => expressions
-                .into_iter()
+        match nnf.node() {
+            Or(es) => es
+                .iter()
                 .map(|e| e.to_cnf())
-                .reduce(|acc, e| Expression::distribute(acc, e))
+                .reduce(|acc, e| Expression::distribute(&acc, &e))
                 .unwrap(),
-            And(expressions) => And(expressions
-                .into_iter()
-                .map(|e| Arc::new(e.to_cnf()))
-                .collect()),
-            expression => expression,
+            And(es) => And(es.iter().map(|e| e.to_cnf()).collect()).into(),
+            _other => nnf,
         }
     }
 
@@ -121,74 +127,93 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
     // | phi1, FAnd_wi and1 and2 → FAnd_wi (distr phi1 and1) (distr phi1 and2)
     // | phi1,phi2 → FOr_wi phi1 phi2
     // end
-    fn distribute(first: Self, other: Self) -> Self {
-        match (first, other) {
-            (And(expressions), other) => And(expressions
-                .into_iter()
-                .map(|e| Arc::new(Expression::distribute(e.as_ref().clone(), other.clone())))
-                .collect()),
-            (other, And(expressions)) => And(expressions
-                .into_iter()
-                .map(|e| Arc::new(Expression::distribute(other.clone(), e.as_ref().clone())))
-                .collect()),
-            (expression1, expression2) => Expression::binary_or(expression1, expression2),
+    fn distribute(first: &Self, second: &Self) -> Self {
+        match (first.node(), second.node()) {
+            (And(es), _) => {
+                let es = es
+                    .iter()
+                    .map(|e| Expression::distribute(e, second))
+                    .collect();
+                And(es).into()
+            }
+            (_, And(es)) => {
+                let es = es
+                    .iter()
+                    .map(|e| Expression::distribute(first, e))
+                    .collect();
+                And(es).into()
+            }
+            (_e1, _e2) => Expression::binary_or(first, second),
         }
     }
 
     pub fn is_cnf(&self) -> bool {
-        match self {
+        match self.node() {
             Literal(_) => true,
             Constant(_) => false,
-            Not(ref inner) => matches!(inner.deref(), Literal(_)),
+            Not(inner) => matches!(inner.node(), Literal(_)),
             And(es) => es.iter().all(|e| e.is_cnf()),
             Or(es) => !es.iter().any(|e| e.is_and()) && es.iter().all(|e| e.is_cnf()),
         }
     }
 
     pub fn rename_literals(&self, mapping: &HashMap<T, T>) -> Self {
-        match self {
-            Literal(name) => {
-                let new = mapping.get(name).unwrap_or(name);
-                Literal(new.clone())
-            }
+        match self.node() {
+            Literal(name) => Literal(mapping.get(name).unwrap_or(name).clone()),
             Constant(value) => Constant(*value),
-            Not(inner) => Expression::negate(inner.as_ref().rename_literals(mapping)),
+            Not(inner) => Not(inner.rename_literals(mapping)),
             And(expressions) => And(expressions
                 .iter()
-                .map(|e| Arc::new(e.as_ref().rename_literals(mapping)))
+                .map(|e| e.rename_literals(mapping))
                 .collect()),
             Or(expressions) => Or(expressions
                 .iter()
-                .map(|e| Arc::new(e.as_ref().rename_literals(mapping)))
+                .map(|e| e.rename_literals(mapping))
                 .collect()),
         }
+        .into()
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use std::collections::HashMap;
 
-    #[allow(unused_imports)] // false positive, no idea why
-    use crate::expressions::Expression::{self, Constant, Literal};
-    #[allow(unused_imports)] // false positive, probably because of usage in macros?
     use crate::traits::SemanticEq;
+
+    use super::Expression;
+    use super::ExpressionNode;
+
+    /// A utiltiy function to quickly create a list of literal expressions.
+    pub fn vars<const K: usize>(names: [&str; K]) -> [Expression<String>; K] {
+        std::array::from_fn(|i| ExpressionNode::Literal(names[i].to_string()).into())
+    }
+
+    /// A utility function to quickly create a single literal expression.
+    pub fn var<T: ToString>(name: T) -> Expression<String> {
+        ExpressionNode::Literal(name.to_string()).into()
+    }
+
+    /// A utility function to quickly create a constant expression.
+    pub fn bool(value: bool) -> Expression<String> {
+        ExpressionNode::Constant(value).into()
+    }
+
+    #[test]
+    fn test_literals() {
+        let x = var("a");
+        let y = Expression::negate(&x);
+        let z = Expression::negate(&y);
+        assert!(x.is_literal());
+        assert!(y.is_literal());
+        assert!(!z.is_literal());
+    }
 
     #[test]
     fn test_to_nnf_1() {
         // (Not notA) ∨ (Not (notB ∨ vC)), vA ∨ (vB ∧ notC)
-        let input = Expression::binary_or(
-            Expression::negate(Expression::negate(Literal("a"))),
-            Expression::negate(Expression::binary_or(
-                Expression::negate(Literal("b")),
-                Literal("c"),
-            )),
-        );
-
-        let expected = Expression::binary_or(
-            Literal("a"),
-            Expression::binary_and(Literal("b"), Expression::negate(Literal("c"))),
-        );
+        let input = !!var("a") | !(!var("b") | var("c"));
+        let expected = var("a") | (var("b") & !var("c"));
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
@@ -197,24 +222,8 @@ mod tests {
     #[test]
     fn test_to_nnf_2() {
         // Not (vA ∨ (notD ∨ Not (notA ∨ Not notB))), notA ∧ (vD ∧ (notA ∨ vB))
-        let input = Expression::negate(Expression::binary_or(
-            Literal("a"),
-            Expression::binary_or(
-                Expression::negate(Literal("d")),
-                Expression::negate(Expression::binary_or(
-                    Expression::negate(Literal("a")),
-                    Expression::negate(Expression::negate(Literal("b"))),
-                )),
-            ),
-        ));
-
-        let expected = Expression::binary_and(
-            Expression::negate(Literal("a")),
-            Expression::binary_and(
-                Literal("d"),
-                Expression::binary_or(Expression::negate(Literal("a")), Literal("b")),
-            ),
-        );
+        let input = !(var("a") | !var("d") | !(!var("a") | !!var("b")));
+        let expected = !var("a") & var("d") & (!var("a") | var("b"));
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
@@ -223,21 +232,8 @@ mod tests {
     #[test]
     fn test_to_nnn_3() {
         // Not (notA ∨ vB) ∨ Not (vB ∧ notC), (vA ∧ notB) ∨ (notB ∨ vC)
-        let input = Expression::binary_or(
-            Expression::negate(Expression::binary_or(
-                Expression::negate(Literal("a")),
-                Literal("b"),
-            )),
-            Expression::negate(Expression::binary_and(
-                Literal("b"),
-                Expression::negate(Literal("c")),
-            )),
-        );
-
-        let expected = Expression::binary_or(
-            Expression::binary_and(Literal("a"), Expression::negate(Literal("b"))),
-            Expression::binary_or(Expression::negate(Literal("b")), Literal("c")),
-        );
+        let input = !(!var("a") | var("b")) | !(var("b") & !var("c"));
+        let expected = (var("a") & !var("b")) | !var("b") | var("c");
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
@@ -245,29 +241,19 @@ mod tests {
 
     #[test]
     fn distribute_basic() {
-        let input_left = Literal("a");
-        let input_right = Expression::binary_and(Literal("b"), Literal("c"));
+        let input_left = var("a");
+        let input_right = var("b") & var("c");
 
-        let expected = Expression::binary_and(
-            Expression::binary_or(Literal("a"), Literal("b")),
-            Expression::binary_or(Literal("a"), Literal("c")),
-        );
-        let actual = Expression::distribute(input_left, input_right);
+        let expected = (var("a") | var("b")) & (var("a") | var("c"));
+        let actual = Expression::distribute(&input_left, &input_right);
 
         assert!(expected.semantic_eq(&actual));
     }
 
     #[test]
     fn to_cnf_basic() {
-        let input = Expression::binary_or(
-            Literal("a"),
-            Expression::binary_and(Literal("b"), Literal("c")),
-        );
-
-        let expected = Expression::binary_and(
-            Expression::binary_or(Literal("a"), Literal("b")),
-            Expression::binary_or(Literal("a"), Literal("c")),
-        );
+        let input = var("a") | (var("b") & var("c"));
+        let expected = (var("a") | var("b")) & (var("a") | var("c"));
         let actual = input.to_cnf();
 
         assert!(expected.semantic_eq(&actual));
@@ -276,16 +262,8 @@ mod tests {
 
     #[test]
     fn to_cnf_n_ary() {
-        let input = Expression::n_ary_or(vec![
-            Literal("a"),
-            Literal("b"),
-            Expression::binary_and(Literal("c"), Literal("d")),
-        ]);
-
-        let expected = Expression::binary_and(
-            Expression::n_ary_or(vec![Literal("a"), Literal("b"), Literal("c")]),
-            Expression::n_ary_or(vec![Literal("a"), Literal("b"), Literal("d")]),
-        );
+        let input = var("a") | var("b") | (var("c") & var("d"));
+        let expected = (var("a") | var("b") | var("c")) & (var("a") | var("b") | var("d"));
         let actual = input.to_cnf();
 
         assert!(expected.semantic_eq(&actual));
@@ -294,62 +272,15 @@ mod tests {
 
     #[test]
     fn to_cnf_n_ary_2() {
-        let input = Expression::n_ary_or(vec![
-            Literal("e1"),
-            Literal("e2"),
-            Literal("e3"),
-            Literal("e4"),
-            Literal("e5"),
-            Expression::n_ary_and(vec![
-                Literal("c1"),
-                Literal("c2"),
-                Literal("c3"),
-                Literal("c4"),
-                Literal("c5"),
-            ]),
-        ]);
+        let c = Expression::n_ary_and(&vars(["c1", "c2", "c3", "c4", "c5"]));
+        let input = var("e1") | var("e2") | var("e3") | var("e4") | var("e5") | c;
 
-        let expected = Expression::n_ary_and(vec![
-            Expression::n_ary_or(vec![
-                Literal("e1"),
-                Literal("e2"),
-                Literal("e3"),
-                Literal("e4"),
-                Literal("e5"),
-                Literal("c1"),
-            ]),
-            Expression::n_ary_or(vec![
-                Literal("e1"),
-                Literal("e2"),
-                Literal("e3"),
-                Literal("e4"),
-                Literal("e5"),
-                Literal("c2"),
-            ]),
-            Expression::n_ary_or(vec![
-                Literal("e1"),
-                Literal("e2"),
-                Literal("e3"),
-                Literal("e4"),
-                Literal("e5"),
-                Literal("c3"),
-            ]),
-            Expression::n_ary_or(vec![
-                Literal("e1"),
-                Literal("e2"),
-                Literal("e3"),
-                Literal("e4"),
-                Literal("e5"),
-                Literal("c4"),
-            ]),
-            Expression::n_ary_or(vec![
-                Literal("e1"),
-                Literal("e2"),
-                Literal("e3"),
-                Literal("e4"),
-                Literal("e5"),
-                Literal("c5"),
-            ]),
+        let expected = Expression::n_ary_and(&[
+            Expression::n_ary_or(&vars(["e1", "e2", "e3", "e4", "e5", "c1"])),
+            Expression::n_ary_or(&vars(["e1", "e2", "e3", "e4", "e5", "c2"])),
+            Expression::n_ary_or(&vars(["e1", "e2", "e3", "e4", "e5", "c3"])),
+            Expression::n_ary_or(&vars(["e1", "e2", "e3", "e4", "e5", "c4"])),
+            Expression::n_ary_or(&vars(["e1", "e2", "e3", "e4", "e5", "c5"])),
         ]);
         let actual = input.to_cnf();
 
@@ -359,18 +290,21 @@ mod tests {
 
     #[test]
     fn is_cnf_levels() {
+        // We intentionally don't use the built-in operators because they would "level" the expression.
+        let x = var("x");
+        let y = var("y");
         let nested = Expression::binary_and(
-            Expression::binary_and(
-                Expression::binary_or(Literal("x"), Literal("y")),
-                Expression::binary_or(Literal("x"), Literal("y")),
+            &Expression::binary_and(
+                &Expression::binary_or(&x, &y),
+                &Expression::binary_or(&x, &y),
             ),
-            Expression::binary_or(Literal("x"), Literal("y")),
+            &Expression::binary_or(&x, &y),
         );
 
-        let leveled = Expression::n_ary_and(vec![
-            Expression::binary_or(Literal("x"), Literal("y")),
-            Expression::binary_or(Literal("x"), Literal("y")),
-            Expression::binary_or(Literal("x"), Literal("y")),
+        let leveled = Expression::n_ary_and(&[
+            Expression::binary_or(&x, &y),
+            Expression::binary_or(&x, &y),
+            Expression::binary_or(&x, &y),
         ]);
 
         assert!(nested.semantic_eq(&leveled));
@@ -381,29 +315,12 @@ mod tests {
 
     #[test]
     fn test_rename_literals_ok() {
-        let mut mapping = HashMap::new();
-        mapping.insert("a", "1");
-        mapping.insert("b", "2");
-        mapping.insert("c", "3");
-        mapping.insert("d", "4");
-        mapping.insert("e", "5");
+        let pairs = [("a", "1"), ("b", "2"), ("c", "3"), ("d", "4"), ("e", "5")];
+        let mapping = HashMap::from_iter(pairs.iter().map(|(x, y)| (x.to_string(), y.to_string())));
 
-        let input = Expression::n_ary_or(vec![
-            Literal("a"),
-            Literal("b"),
-            Expression::binary_and(Literal("c"), Literal("d")),
-            Constant(true),
-            Expression::negate(Literal("a")),
-        ]);
-
+        let input = var("a") | var("b") | (var("c") & var("d")) | bool(true) | !var("a");
+        let expected = var("1") | var("2") | (var("3") & var("4")) | bool(true) | !var("1");
         let actual = input.rename_literals(&mapping);
-        let expected = Expression::n_ary_or(vec![
-            Literal("1"),
-            Literal("2"),
-            Expression::binary_and(Literal("3"), Literal("4")),
-            Constant(true),
-            Expression::negate(Literal("1")),
-        ]);
 
         assert_eq!(actual, expected)
     }

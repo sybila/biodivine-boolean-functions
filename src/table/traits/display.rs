@@ -31,11 +31,11 @@ mod tests {
         let input_table = TruthTable::from(input_expression.clone());
 
         let expected = concat!(
-            "x0     x1     result \n",
-            "false  false  false  \n",
-            "false  true   false  \n",
-            "true   false  false  \n",
-            "true   true   true   \n",
+            "x0    x1    result \n",
+            "false false false  \n",
+            "false true  false  \n",
+            "true  false false  \n",
+            "true  true  true   ",
         );
         let actual = input_table.to_string();
 

@@ -3,7 +3,7 @@ use std::hash::Hash;
 use std::iter::once;
 
 use tabled::builder::Builder;
-use tabled::settings::Style;
+use tabled::settings::{Padding, Style};
 
 use crate::table::TruthTable;
 
@@ -20,7 +20,8 @@ impl TableStyle {
     fn build_table_with(&self, builder: Builder) -> String {
         let mut built = builder.build();
         match self {
-            TableStyle::Empty => built.with(Style::empty()),
+            // The default style is not as empty as it seems
+            TableStyle::Empty => built.with(Style::empty()).with(Padding::new(0, 1, 0, 0)),
             TableStyle::Ascii => built.with(Style::ascii()),
             TableStyle::Modern => built.with(Style::modern()),
             TableStyle::Markdown => built.with(Style::markdown()),

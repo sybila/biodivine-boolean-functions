@@ -2,8 +2,8 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
 use crate::expressions::Expression;
-use crate::table::TruthTable;
 use crate::table::utils::values_to_row_index;
+use crate::table::TruthTable;
 use crate::traits::{Evaluate, GatherLiterals, PowerSet};
 
 impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<Expression<TLiteral>>

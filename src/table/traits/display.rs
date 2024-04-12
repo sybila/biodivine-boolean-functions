@@ -39,6 +39,6 @@ mod tests {
         );
         let actual = input_table.to_string();
 
-        assert_eq!(input_table.to_string(), actual);
+        assert_eq!(expected, actual);
     }
 }

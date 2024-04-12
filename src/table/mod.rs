@@ -4,6 +4,7 @@ use std::hash::Hash;
 use crate::expressions::Expression;
 use crate::table::utils::row_index_to_valuation;
 
+mod display_formatted;
 pub mod traits;
 mod utils;
 

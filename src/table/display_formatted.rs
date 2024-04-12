@@ -39,35 +39,55 @@ pub enum TableBooleanFormatting {
     CapitalizedWord,
 }
 
+pub const FALSE_NUMBER: &str = "0";
+pub const FALSE_CHARACTER: &str = "F";
+pub const FALSE_WORD: &str = "false";
+pub const FALSE_CAPITALIZED_WORD: &str = "False";
+pub const TRUE_NUMBER: &str = "1";
+pub const TRUE_CHARACTER: &str = "T";
+pub const TRUE_WORD: &str = "true";
+pub const TRUE_CAPITALIZED_WORD: &str = "True";
+
+pub const ALL_BOOL_STRINGS: [&str; 8] = [
+    FALSE_NUMBER,
+    FALSE_CHARACTER,
+    FALSE_WORD,
+    FALSE_CAPITALIZED_WORD,
+    TRUE_NUMBER,
+    TRUE_CHARACTER,
+    TRUE_WORD,
+    TRUE_CAPITALIZED_WORD,
+];
+
 impl TableBooleanFormatting {
     fn format_bool(&self, value: &bool) -> String {
         match self {
             TableBooleanFormatting::Number => {
                 if *value {
-                    "1"
+                    TRUE_NUMBER
                 } else {
-                    "0"
+                    FALSE_NUMBER
                 }
             }
             TableBooleanFormatting::Character => {
                 if *value {
-                    "T"
+                    TRUE_CHARACTER
                 } else {
-                    "F"
+                    FALSE_CHARACTER
                 }
             }
             TableBooleanFormatting::Word => {
                 if *value {
-                    "true"
+                    TRUE_WORD
                 } else {
-                    "false"
+                    FALSE_WORD
                 }
             }
             TableBooleanFormatting::CapitalizedWord => {
                 if *value {
-                    "True"
+                    TRUE_CAPITALIZED_WORD
                 } else {
-                    "False"
+                    FALSE_CAPITALIZED_WORD
                 }
             }
         }

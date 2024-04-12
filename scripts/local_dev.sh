@@ -24,4 +24,4 @@ echo "Virtual environment: $VIRTUAL_ENV"
 
 # We *have* to activate the environment for maturin to work (we can't just call
 # it with an absolute path like any other executable Python package).
-source $VIRTUAL_ENV/bin/activate; maturin develop
+source $VIRTUAL_ENV/bin/activate; maturin develop -F python

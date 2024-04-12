@@ -35,6 +35,7 @@ pub enum TableBooleanFormatting {
     Number,
     Character,
     Word,
+    CapitalizedWord,
 }
 
 impl TableBooleanFormatting {
@@ -59,6 +60,13 @@ impl TableBooleanFormatting {
                     "true"
                 } else {
                     "false"
+                }
+            }
+            TableBooleanFormatting::CapitalizedWord => {
+                if *value {
+                    "True"
+                } else {
+                    "False"
                 }
             }
         }

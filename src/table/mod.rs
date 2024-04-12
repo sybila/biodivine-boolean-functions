@@ -4,6 +4,7 @@ use std::hash::Hash;
 use crate::expressions::Expression;
 use crate::table::utils::row_index_to_valuation;
 
+pub mod traits;
 mod utils;
 
 #[derive(Debug, PartialEq, Eq)]

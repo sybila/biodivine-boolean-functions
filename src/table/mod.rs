@@ -4,7 +4,9 @@ use std::hash::Hash;
 use crate::expressions::Expression;
 use crate::table::utils::row_index_to_valuation;
 
-mod display_formatted;
+#[cfg(feature = "csv")]
+pub mod csv;
+pub mod display_formatted;
 pub mod traits;
 mod utils;
 
@@ -18,6 +20,10 @@ where
 }
 
 impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
+    fn new(inputs: Vec<TLiteral>, outputs: Vec<bool>) -> Self {
+        Self { inputs, outputs }
+    }
+
     pub fn row_count(&self) -> usize {
         2_usize.pow(self.variable_count() as u32)
     }

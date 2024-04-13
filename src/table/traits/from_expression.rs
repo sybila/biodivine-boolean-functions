@@ -34,10 +34,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<&Expression<TLite
             outputs[index] = value;
         }
 
-        Self {
-            inputs: literals,
-            outputs,
-        }
+        Self::new(literals, outputs)
     }
 }
 

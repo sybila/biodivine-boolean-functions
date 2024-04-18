@@ -3,7 +3,6 @@ use crate::table::TruthTable;
 use itertools::Itertools;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
-use std::iter::once;
 
 impl<TLiteral: Debug + Display + Clone + Eq + Hash> TruthTable<TLiteral> {
     pub fn to_csv(&self) -> String {
@@ -25,24 +24,20 @@ impl<TLiteral: Debug + Display + Clone + Eq + Hash> TruthTable<TLiteral> {
         }
 
         let delimiter = &delimiter.to_string();
-        let header = self
-            .inputs
-            .iter()
-            .map(|literal| literal.to_string())
-            .chain(once("result".to_string()))
-            .join(delimiter);
+        let header = self.header_row_iterator().join(delimiter);
 
         let rows = self
             .outputs
             .iter()
             .enumerate()
             .map(|(row_index, output_value)| {
-                self.row(row_index)
-                    .iter()
-                    .map(|value| inputs_formatting.format_bool(value))
-                    .chain(once(output_value).map(|value| output_formatting.format_bool(value)))
-                    .map(|bool| bool.to_string())
-                    .join(delimiter)
+                self.record_row(
+                    row_index,
+                    output_value,
+                    &inputs_formatting,
+                    &output_formatting,
+                )
+                .join(delimiter)
             })
             .join("\n");
 

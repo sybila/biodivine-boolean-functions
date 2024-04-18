@@ -38,13 +38,33 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
         self.inputs.is_empty() && self.outputs.is_empty()
     }
 
+    /// Returns `Some(true)` if the table has no variables but one output equal to `true`,
+    /// `Some(false`) if the table has no variables but one output equal to `false`,
+    /// `None` otherwise.
+    pub fn stub_value(&self) -> Option<bool> {
+        if self.variable_count() == 0 {
+            self.outputs.first().cloned()
+        } else {
+            None
+        }
+    }
+
     pub fn to_expression_trivial(&self) -> Expression<TLiteral> {
+        if let Some(value) = self.stub_value() {
+            return ExpressionNode::Constant(value).into();
+        }
+
         let truth_row_indexes = self
             .outputs
             .iter()
             .enumerate()
             .filter(|(_index, is_row_true)| **is_row_true)
-            .map(|(index, _value)| index);
+            .map(|(index, _value)| index)
+            .collect::<Vec<_>>();
+
+        if truth_row_indexes.is_empty() {
+            return ExpressionNode::Constant(false).into();
+        }
 
         let and_expressions = truth_row_indexes
             .into_iter()

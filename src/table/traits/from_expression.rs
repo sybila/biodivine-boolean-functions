@@ -134,4 +134,34 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_from_expression_variableless_tautology_ok() {
+        let input = bool(true) | bool(false);
+
+        let actual = TruthTable::from(input);
+
+        println!("{}", actual);
+        let expected = TruthTable {
+            inputs: vec![],
+            outputs: vec![true],
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_from_expression_variableless_contradiction_ok() {
+        let input = bool(true) & bool(false);
+
+        let actual = TruthTable::from(input);
+
+        println!("{}", actual);
+        let expected = TruthTable {
+            inputs: vec![],
+            outputs: vec![false],
+        };
+
+        assert_eq!(actual, expected);
+    }
 }

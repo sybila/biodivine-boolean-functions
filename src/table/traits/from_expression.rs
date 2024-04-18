@@ -40,19 +40,16 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<&Expression<TLite
 
 #[cfg(test)]
 mod tests {
-    use Expression::*;
+    use crate::expressions::{
+        tests::{bool, var, vars},
+        Expression,
+    };
 
     use super::*;
 
     #[test]
     fn test_from_expression_literals_sorted_ok() {
-        let input = Expression::n_ary_and(vec![
-            Literal("x3"),
-            Literal("x2"),
-            Literal("x1"),
-            Literal("x3"),
-            Literal("x0"),
-        ]);
+        let input = Expression::n_ary_and(&vars(["x3", "x2", "x1", "x3", "x0"]));
 
         let expected = vec!["x0", "x1", "x2", "x3"];
         let actual = TruthTable::from(input).inputs;
@@ -62,11 +59,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_x0_one_variable_ok() {
-        let input = Literal("x0");
+        let input = var("x0");
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0"],
+            inputs: vec!["x0".to_string()],
             outputs: vec![false, true],
         };
 
@@ -75,11 +72,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_not_x0_one_variable_ok() {
-        let input = Expression::negate(Literal("x0"));
+        let input = !var("x0");
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0"],
+            inputs: vec!["x0".to_string()],
             outputs: vec![true, false],
         };
 
@@ -88,14 +85,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_x0_two_variables_ok() {
-        let input = Expression::binary_and(
-            Literal("x0"),
-            Expression::binary_or(Literal("x1"), Expression::negate(Literal("x1"))), // tautology
-        );
+        let input = var("x0") & (var("x1") | !var("x1")); // tautology
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0", "x1"],
+            inputs: vec!["x0".to_string(), "x1".to_string()],
             outputs: vec![false, false, true, true],
         };
 
@@ -104,14 +98,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_not_x0_two_variables_ok() {
-        let input = Expression::binary_and(
-            Expression::negate(Literal("x0")),
-            Expression::binary_or(Literal("x1"), Expression::negate(Literal("x1"))), // tautology
-        );
+        let input = !var("x0") & (var("x1") | !var("x1")); // tautology
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0", "x1"],
+            inputs: vec!["x0".to_string(), "x1".to_string()],
             outputs: vec![true, true, false, false],
         };
 
@@ -120,11 +111,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_and_ok() {
-        let input = Expression::binary_and(Literal("x0"), Literal("x1"));
+        let input = var("x0") & var("x1");
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0", "x1"],
+            inputs: vec!["x0".to_string(), "x1".to_string()],
             outputs: vec![false, false, false, true],
         };
 
@@ -133,11 +124,11 @@ mod tests {
 
     #[test]
     fn test_from_expression_basic_case_or_ok() {
-        let input = Expression::binary_or(Literal("x0"), Literal("x1"));
+        let input = var("x0") | var("x1");
 
         let actual = TruthTable::from(input);
         let expected = TruthTable {
-            inputs: vec!["x0", "x1"],
+            inputs: vec!["x0".to_string(), "x1".to_string()],
             outputs: vec![false, true, true, true],
         };
 

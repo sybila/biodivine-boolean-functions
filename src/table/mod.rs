@@ -1,7 +1,9 @@
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
+use std::iter::once;
 
 use crate::expressions::Expression;
+use crate::table::display_formatted::TableBooleanFormatting;
 use crate::table::utils::row_index_to_valuation;
 
 #[cfg(feature = "csv")]
@@ -79,6 +81,28 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
 
     pub fn row(&self, row_index: usize) -> Vec<bool> {
         row_index_to_valuation(row_index, self.variable_count())
+    }
+
+    fn header_row_iterator(&self) -> impl Iterator<Item = String> + '_ {
+        self.inputs
+            .iter()
+            .map(|literal| literal.to_string())
+            .chain(once("result".to_string()))
+    }
+
+    fn record_row(
+        &self,
+        row_index: usize,
+        output_value: &bool,
+        inputs_formatting: &TableBooleanFormatting,
+        output_formatting: &TableBooleanFormatting,
+    ) -> Vec<String> {
+        row_index_to_valuation(row_index, self.variable_count())
+            .iter()
+            .map(move |value| inputs_formatting.format_bool(value))
+            .chain(once(output_value).map(move |value| output_formatting.format_bool(value)))
+            .map(|bool| bool.to_string())
+            .collect()
     }
 }
 

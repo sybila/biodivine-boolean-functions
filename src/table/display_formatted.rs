@@ -60,7 +60,7 @@ pub const ALL_BOOL_STRINGS: [&str; 8] = [
 ];
 
 impl TableBooleanFormatting {
-    fn format_bool(&self, value: &bool) -> String {
+    pub fn format_bool(&self, value: &bool) -> String {
         match self {
             TableBooleanFormatting::Number => {
                 if *value {

@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use ExpressionNode::{And, Constant, Literal, Not, Or};
 
-pub mod traits;
+mod traits;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ExpressionNode<T>

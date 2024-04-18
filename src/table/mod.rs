@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::iter::once;
 
-use crate::expressions::Expression;
+use crate::expressions::{Expression, ExpressionNode};
 use crate::table::display_formatted::TableBooleanFormatting;
 use crate::table::utils::row_index_to_valuation;
 
@@ -51,16 +51,16 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
             .map(|row_index| self.row(row_index))
             .map(|row_values| {
                 Expression::n_ary_and(
-                    row_values
+                    &row_values
                         .into_iter()
                         .enumerate()
                         .map(|(index, literal_value)| self.cell_to_expression(index, literal_value))
-                        .collect(),
+                        .collect::<Vec<_>>(),
                 )
             })
-            .collect();
+            .collect::<Vec<_>>();
 
-        Expression::n_ary_or(and_expressions)
+        Expression::n_ary_or(&and_expressions)
     }
 
     fn cell_to_expression(&self, cell_index: usize, literal_value: bool) -> Expression<TLiteral> {
@@ -69,9 +69,9 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
             .get(cell_index)
             .expect("Number of variables is different from number of values");
         if literal_value {
-            Expression::Literal(literal.clone())
+            ExpressionNode::Literal(literal.clone()).into()
         } else {
-            Expression::negate(Expression::Literal(literal.clone()))
+            Expression::negate(&ExpressionNode::Literal(literal.clone()).into())
         }
     }
 
@@ -108,26 +108,28 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::Expression;
-    use crate::expressions::Expression::Literal;
+    use crate::expressions::{
+        tests::{bool, var},
+        Expression,
+    };
     use crate::table::TruthTable;
     use crate::traits::SemanticEq;
 
     #[test]
     fn test_to_expression_and_ok() {
-        let input_expression = Expression::binary_and(Literal("x0"), Literal("x1"));
+        let input_expression = var("x0") & var("x1");
         let input_table = TruthTable::from(input_expression.clone());
 
         let actual = input_table.to_expression_trivial();
         assert!(actual.semantic_eq(&input_expression));
 
         // this inner is equal to input
-        assert_eq!(actual, Expression::n_ary_or(vec![input_expression]));
+        assert_eq!(actual, Expression::n_ary_or(&vec![input_expression]));
     }
 
     #[test]
     fn test_to_expression_or_ok() {
-        let input_expression = Expression::binary_or(Literal("x0"), Literal("x1"));
+        let input_expression = var("x0") | var("x1");
         let input_table = TruthTable::from(input_expression.clone());
 
         let actual = input_table.to_expression_trivial();
@@ -135,11 +137,7 @@ mod tests {
 
         assert_eq!(
             actual,
-            Expression::n_ary_or(vec![
-                Expression::binary_and(Expression::negate(Literal("x0")), Literal("x1")),
-                Expression::binary_and(Literal("x0"), Expression::negate(Literal("x1"))),
-                Expression::binary_and(Literal("x0"), Literal("x1")),
-            ])
+            (!var("x0") & var("x1")) | (var("x0") & !var("x1")) | (var("x0") & var("x1"))
         );
     }
 }

@@ -20,14 +20,13 @@ impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Display for TruthTable
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::Expression;
-    use crate::expressions::Expression::Literal;
+    use crate::expressions::tests::var;
 
     use super::*;
 
     #[test]
     fn test_output_short_variables_and_ok() {
-        let input_expression = Expression::binary_and(Literal("x0"), Literal("x1"));
+        let input_expression = var("x0") & var("x1");
         let input_table = TruthTable::from(input_expression.clone());
 
         let expected = concat!(
@@ -44,8 +43,7 @@ mod tests {
 
     #[test]
     fn test_output_long_variables_and_ok() {
-        let input_expression =
-            Expression::binary_and(Literal("longvariablename1"), Literal("longvariablename2"));
+        let input_expression = var("longvariablename1") & var("longvariablename2");
         let input_table = TruthTable::from(input_expression.clone());
 
         let expected = concat!(

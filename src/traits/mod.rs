@@ -7,3 +7,4 @@ mod evaluate;
 mod gather_literals;
 mod power_set;
 mod semantic_eq;
+mod boolean_function;

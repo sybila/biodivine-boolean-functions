@@ -32,6 +32,10 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
         self.inputs.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.inputs.is_empty() && self.outputs.is_empty()
+    }
+
     pub fn to_expression_trivial(&self) -> Expression<TLiteral> {
         let truth_row_indexes = self
             .outputs

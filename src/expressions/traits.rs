@@ -3,8 +3,6 @@ use std::fmt::{Debug, Display, Error, Formatter};
 use std::hash::Hash;
 use std::ops::{BitAnd, BitOr};
 
-use itertools::Itertools;
-
 use crate::parser::{parse_tokens, tokenize, ParseError};
 use crate::traits::{Evaluate, GatherLiterals, Parse, PowerSet, SemanticEq};
 
@@ -61,35 +59,64 @@ impl<TLiteral: Debug + Clone + Eq + Hash> PowerSet<TLiteral> for Expression<TLit
 }
 
 impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLiteral> {
-    fn evaluate(&self, literal_values: &HashMap<TLiteral, bool>) -> bool {
+    fn evaluate_with_default(
+        &self,
+        literal_values: &HashMap<TLiteral, bool>,
+        default_value: bool,
+    ) -> bool {
         match self.node() {
-            Literal(t) => *literal_values.get(t).unwrap_or(&false),
+            Literal(t) => *literal_values.get(t).unwrap_or(&default_value),
             Constant(value) => *value,
-            And(values) => values.iter().all(|e| e.evaluate(literal_values)),
-            Or(values) => values.iter().any(|e| e.evaluate(literal_values)),
-            Not(x) => !x.evaluate(literal_values),
+            And(values) => values
+                .iter()
+                .all(|e| e.evaluate_with_default(literal_values, default_value)),
+            Or(values) => values
+                .iter()
+                .any(|e| e.evaluate_with_default(literal_values, default_value)),
+            Not(x) => !x.evaluate_with_default(literal_values, default_value),
         }
     }
 
-    fn evaluate_with_err(
+    fn evaluate_checked(
         &self,
         literal_values: &HashMap<TLiteral, bool>,
-    ) -> Result<bool, TLiteral> {
+    ) -> Result<bool, Vec<TLiteral>> {
+        let mut errors = vec![];
+
+        let ok_result = self.evaluate_checked_rec(literal_values, &mut errors);
+
+        if errors.is_empty() {
+            Ok(ok_result)
+        } else {
+            Err(errors)
+        }
+    }
+}
+
+impl<TLiteral: Debug + Clone + Eq + Hash> Expression<TLiteral> {
+    fn evaluate_checked_rec(
+        &self,
+        literal_values: &HashMap<TLiteral, bool>,
+        err_values: &mut Vec<TLiteral>,
+    ) -> bool {
         match self.node() {
             Literal(t) => match literal_values.get(t) {
-                None => Err(t.clone()),
-                Some(valuation) => Ok(*valuation),
+                None => {
+                    err_values.push(t.clone());
+                    true // will be unused
+                }
+                Some(valuation) => *valuation,
             },
-            Constant(value) => Ok(*value),
-            Not(inner) => inner.evaluate_with_err(literal_values).map(|value| !value),
+            Constant(value) => *value,
+            Not(inner) => !inner.evaluate_checked_rec(literal_values, err_values),
             And(expressions) => expressions
                 .iter()
-                .map(|e| e.evaluate_with_err(literal_values))
-                .fold_ok(true, BitAnd::bitand),
+                .map(|e| e.evaluate_checked_rec(literal_values, err_values))
+                .fold(true, BitAnd::bitand),
             Or(expressions) => expressions
                 .iter()
-                .map(|e| e.evaluate_with_err(literal_values))
-                .fold_ok(false, BitOr::bitor),
+                .map(|e| e.evaluate_checked_rec(literal_values, err_values))
+                .fold(false, BitOr::bitor),
         }
     }
 }

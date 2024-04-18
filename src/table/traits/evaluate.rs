@@ -2,27 +2,70 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
-use crate::table::utils::{values_to_row_index, values_to_row_index_checked};
+use crate::table::utils::{values_to_row_index_checked, values_to_row_index_with_default};
 use crate::table::TruthTable;
 use crate::traits::Evaluate;
 
 impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Evaluate<TLiteral>
     for TruthTable<TLiteral>
 {
-    fn evaluate(&self, literal_values: &HashMap<TLiteral, bool>) -> bool {
-        let index = values_to_row_index(&self.inputs, literal_values);
+    fn evaluate_with_default(
+        &self,
+        literal_values: &HashMap<TLiteral, bool>,
+        default_value: bool,
+    ) -> bool {
+        let index = values_to_row_index_with_default(&self.inputs, literal_values, default_value);
 
         self.outputs[index]
     }
 
-    fn evaluate_with_err(
+    fn evaluate_checked(
         &self,
         literal_values: &HashMap<TLiteral, bool>,
-    ) -> Result<bool, TLiteral> {
-        let index = values_to_row_index_checked(&self.inputs, literal_values)
-            // TODO change after evaluate trait refactor
-            .map_err(|not_found| not_found[0].clone())?;
+    ) -> Result<bool, Vec<TLiteral>> {
+        let index = values_to_row_index_checked(&self.inputs, literal_values)?;
 
         Ok(self.outputs[index])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_evaluate_variables_match_ok() {
+        let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
+
+        let pairs = [("a", true), ("b", true)];
+        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+
+        assert_eq!(input_table.evaluate(&mapping), false);
+        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert_eq!(input_table.evaluate_checked(&mapping), Ok(false));
+    }
+
+    #[test]
+    fn test_evaluate_too_many_variables_ok() {
+        let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
+
+        let pairs = [("a", true), ("b", true), ("c", false)];
+        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+
+        assert_eq!(input_table.evaluate(&mapping), false);
+        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert_eq!(input_table.evaluate_checked(&mapping), Ok(false));
+    }
+
+    #[test]
+    fn test_evaluate_too_few_variables_ok() {
+        let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
+
+        let pairs = [("a", true)];
+        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+
+        assert_eq!(input_table.evaluate(&mapping), true);
+        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert_eq!(input_table.evaluate_checked(&mapping), Err(vec!["b"]));
     }
 }

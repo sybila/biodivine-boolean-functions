@@ -45,16 +45,27 @@ impl PythonTruthTable {
 
     /// Throws a `KeyError` when a variable is encountered that isn't found among
     /// the given `literal_values`.
-    pub fn evaluate_nonsafe(&self, literal_values: HashMap<String, bool>) -> PyResult<bool> {
+    pub fn evaluate_checked(&self, literal_values: HashMap<String, bool>) -> PyResult<bool> {
         Ok(self
             .root
-            .evaluate_with_err(&literal_values)
+            .evaluate_checked(&literal_values)
             .map_err(|name| UnknownVariableWhileEvaluating { name })?)
     }
 
     /// Variables not in the dictionary default to false.
     pub fn evaluate_safe(&self, literal_values: HashMap<String, bool>) -> PyResult<bool> {
         Ok(self.root.evaluate(&literal_values))
+    }
+
+    /// Variables not in the dictionary defaults to the passed `default_value` argument.
+    pub fn evaluate_with_default(
+        &self,
+        literal_values: HashMap<String, bool>,
+        default_value: bool,
+    ) -> PyResult<bool> {
+        Ok(self
+            .root
+            .evaluate_with_default(&literal_values, default_value))
     }
 
     pub fn semantic_eq(&self, other: &Self) -> bool {

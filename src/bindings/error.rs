@@ -6,8 +6,8 @@ use pyo3::{Bound, PyAny, PyErr};
 pub enum PythonExpressionError<'py> {
     #[error("Expected a string to parse from, got {} instead", if let Ok(name) =.value.get_type().qualname() {name} else { "UnknownType".to_string() })]
     UnexpectedConstructorArgument { value: Bound<'py, PyAny> },
-    #[error("Encountered unknown variable while evaluating: {name}")]
-    UnknownVariableWhileEvaluating { name: String },
+    #[error("Encountered unknown variables while evaluating: {}", .name.join(", "))]
+    UnknownVariableWhileEvaluating { name: Vec<String> },
     #[error("")]
     UnexpectedTypeOfArgument,
 }

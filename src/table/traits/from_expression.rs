@@ -40,10 +40,8 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<&Expression<TLite
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::{
-        tests::{bool, var, vars},
-        Expression,
-    };
+    use crate::expressions::Expression;
+    use crate::expressions::{bool, var, vars};
 
     use super::*;
 

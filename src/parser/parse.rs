@@ -56,7 +56,7 @@ fn priority_2_terminal(data: &[FinalToken]) -> Result<Expression<String>, ParseT
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::tests::{bool, var};
+    use crate::expressions::{bool, var};
     use crate::parser::error::ParseTokensError::EmptySideOfOperator;
     use crate::parser::{tokenize, ParseError};
     use crate::traits::SemanticEq;

@@ -1,5 +1,4 @@
-use crate::expressions::Expression;
-use crate::expressions::ExpressionNode::And;
+use crate::expressions::{Expression, ExpressionNode::And};
 use std::fmt::Debug;
 use std::hash::Hash;
 

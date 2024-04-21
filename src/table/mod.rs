@@ -128,10 +128,8 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::{
-        tests::{bool, var},
-        Expression,
-    };
+    use crate::expressions::Expression;
+    use crate::expressions::{bool, var};
     use crate::table::TruthTable;
     use crate::traits::SemanticEq;
 

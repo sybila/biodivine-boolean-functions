@@ -20,7 +20,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Display for TruthTable
 
 #[cfg(test)]
 mod tests {
-    use crate::expressions::tests::var;
+    use crate::expressions::var;
 
     use super::*;
 

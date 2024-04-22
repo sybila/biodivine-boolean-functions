@@ -19,7 +19,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<&Expression<TLite
 {
     fn from(expression: &Expression<TLiteral>) -> Self {
         let literals = expression.gather_literals();
-        let all_options = Expression::generate_power_set(literals.clone());
+        let all_options = expression.generate_power_set();
         let literals = {
             let mut literals = Vec::from_iter(literals);
             literals.sort();

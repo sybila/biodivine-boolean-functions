@@ -1,5 +1,5 @@
 use crate::table::TruthTable;
-use crate::traits::{Evaluate, PowerSet, SemanticEq};
+use crate::traits::{Evaluate, GatherLiterals, PowerSet, SemanticEq};
 use std::collections::HashSet;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
@@ -8,13 +8,13 @@ impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> SemanticEq<TLiteral>
     for TruthTable<TLiteral>
 {
     fn semantic_eq(&self, other: &Self) -> bool {
-        let mut inputs_from_both =
-            Vec::from_iter(self.inputs.clone().into_iter().chain(other.inputs.clone()));
+        let inputs_from_both = HashSet::from_iter(
+            self.gather_literals()
+                .union(&other.gather_literals())
+                .cloned(),
+        );
 
-        inputs_from_both.sort();
-        inputs_from_both.dedup();
-
-        let all_valuations = TruthTable::generate_power_set(HashSet::from_iter(inputs_from_both));
+        let all_valuations = Self::generate_arbitrary_power_set(inputs_from_both);
 
         all_valuations
             .into_iter()

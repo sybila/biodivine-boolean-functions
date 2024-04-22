@@ -65,6 +65,9 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
         if truth_row_indexes.is_empty() {
             return ExpressionNode::Constant(false).into();
         }
+        if truth_row_indexes.len() == self.outputs.len() {
+            return ExpressionNode::Constant(true).into();
+        }
 
         let and_expressions = truth_row_indexes
             .into_iter()
@@ -168,6 +171,17 @@ mod tests {
         assert!(actual.semantic_eq(&input_expression));
 
         assert_eq!(actual, bool(false));
+    }
+
+    #[test]
+    fn test_to_expression_always_true_ok() {
+        let input_expression = var("x0") | !var("x0");
+        let input_table = TruthTable::from(input_expression.clone());
+
+        let actual = input_table.to_expression_trivial();
+        assert!(actual.semantic_eq(&input_expression));
+
+        assert_eq!(actual, bool(true));
     }
 
     #[test]

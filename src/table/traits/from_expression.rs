@@ -139,7 +139,6 @@ mod tests {
 
         let actual = TruthTable::from(input);
 
-        println!("{}", actual);
         let expected = TruthTable {
             inputs: vec![],
             outputs: vec![true],
@@ -154,7 +153,6 @@ mod tests {
 
         let actual = TruthTable::from(input);
 
-        println!("{}", actual);
         let expected = TruthTable {
             inputs: vec![],
             outputs: vec![false],

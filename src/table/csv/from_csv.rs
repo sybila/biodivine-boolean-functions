@@ -250,6 +250,50 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_empty_string_ok() -> Result<(), TruthTableFromCsvError> {
+        let contents = "";
+
+        let table = TruthTable::from_csv_string(contents)?;
+
+        assert_eq!(table.inputs, Vec::<String>::new());
+        assert_eq!(table.outputs, vec![]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_onlyheaders_string_ok() -> Result<(), TruthTableFromCsvError> {
+        let contents = "a,b,result";
+
+        let actual = TruthTable::from_csv_string(contents);
+        let expected_err_message = TruthTableFromCsvError::MismatchedRecordCountAndVariableCount {
+            variable_count: 2,
+            actual_row_count: 0,
+        }
+        .to_string();
+
+        assert!(actual.is_err());
+        assert_eq!(actual.unwrap_err().to_string(), expected_err_message);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_eof_error_nok() -> Result<(), TruthTableFromCsvError> {
+        let file = contents_to_temp_file("");
+
+        let table = TruthTable::from_csv_common(0, Box::new(File::open(file.path())?));
+        let expected_err_message = TruthTableFromCsvError::UnexpectedEof.to_string();
+
+        assert!(table.is_err());
+        assert!(table
+            .unwrap_err()
+            .to_string()
+            .contains(&expected_err_message));
+        Ok(())
+    }
+
     #[template]
     #[rstest]
     #[case::with_headers(false)]

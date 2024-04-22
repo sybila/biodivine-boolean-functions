@@ -1,5 +1,9 @@
-use crate::table::display_formatted::ALL_BOOL_STRINGS;
 use std::io;
+
+use pyo3::exceptions::{PyEOFError, PyIOError, PyRuntimeError, PyTypeError};
+use pyo3::PyErr;
+
+use crate::table::display_formatted::ALL_BOOL_STRINGS;
 
 // PartialEq and Eq is here due to checks in tests
 #[derive(Debug, thiserror::Error)]
@@ -29,4 +33,23 @@ pub enum TruthTableFromCsvError {
     ParsingError(#[from] csv::Error),
     #[error(transparent)]
     IOError(#[from] io::Error),
+}
+
+#[cfg(feature = "python")]
+impl From<TruthTableFromCsvError> for PyErr {
+    fn from(err: TruthTableFromCsvError) -> PyErr {
+        use TruthTableFromCsvError::*;
+
+        match err {
+            e @ UnexpectedEof => PyEOFError::new_err(e.to_string()),
+            e @ NonBooleanCellValue { .. } => PyTypeError::new_err(e.to_string()),
+            e @ DuplicateVariableName { .. }
+            | e @ RecordDifferentSizeThanHeader { .. }
+            | e @ NoOutputColumn
+            | e @ MismatchedRecordCountAndVariableCount { .. }
+            | e @ NoDelimiterFound => PyRuntimeError::new_err(e.to_string()),
+            ParsingError(e) => PyRuntimeError::new_err(e.to_string()),
+            IOError(e) => PyIOError::new_err(e),
+        }
+    }
 }

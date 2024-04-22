@@ -1,9 +1,11 @@
 use crate::expressions::Expression;
 use crate::parser::{parse_tokens, tokenize, ParseError};
-use crate::traits::Parse;
+use std::str::FromStr;
 
-impl Parse for Expression<String> {
-    fn from_str(input: &str) -> Result<Self, ParseError> {
+impl FromStr for Expression<String> {
+    type Err = ParseError;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let tokens = tokenize(input)?;
         let parsed = parse_tokens(&tokens)?;
 

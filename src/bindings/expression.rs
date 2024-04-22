@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 
 use pyo3::prelude::{pyclass, pymethods, PyAny, PyAnyMethods, PyResult};
 use pyo3::Bound;
@@ -6,7 +7,7 @@ use pyo3::Bound;
 use crate::bindings::error::PythonExpressionError;
 use crate::bindings::error::PythonExpressionError::UnknownVariableWhileEvaluating;
 use crate::expressions::{Expression as RustExpression, ExpressionNode};
-use crate::traits::{Evaluate, GatherLiterals, Parse, SemanticEq};
+use crate::traits::{Evaluate, GatherLiterals, SemanticEq};
 
 #[pyclass(frozen)]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -42,7 +43,7 @@ impl PythonExpression {
             return Ok(expression);
         }
         if let Ok(value) = value.extract::<String>() {
-            return match RustExpression::from_string(value) {
+            return match RustExpression::from_str(&value) {
                 Ok(expression) => Ok(Self::new(expression)),
                 Err(parse_error) => Err(parse_error.into()),
             };

@@ -124,3 +124,143 @@ impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
         table_style.build_table_with(builder)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TableBooleanFormatting::{self, CapitalizedWord, Character, Number, Word};
+    use crate::table::display_formatted::TableStyle;
+    use crate::table::TruthTable;
+    use rstest::rstest;
+    use rstest_reuse::{apply, template};
+
+    #[template]
+    #[rstest]
+    fn formatting_template(
+        #[values(Number, Character, Word, CapitalizedWord)]
+        inputs_formatting: TableBooleanFormatting,
+        #[values(Number, Character, Word, CapitalizedWord)]
+        output_formatting: TableBooleanFormatting,
+    ) {
+    }
+
+    fn replace_macros(
+        input_table: &str,
+        inputs_formatting: &TableBooleanFormatting,
+        output_formatting: &TableBooleanFormatting,
+    ) -> String {
+        input_table
+            .replace(
+                'o',
+                &format!("{: <5}", inputs_formatting.format_bool(&false)),
+            )
+            .replace(
+                'i',
+                &format!("{: <5}", inputs_formatting.format_bool(&true)),
+            )
+            .replace(
+                'O',
+                &format!("{: <6}", output_formatting.format_bool(&false)),
+            )
+            .replace(
+                'I',
+                &format!("{: <6}", output_formatting.format_bool(&true)),
+            )
+    }
+
+    #[apply(formatting_template)]
+    fn test_modern_ok(
+        inputs_formatting: TableBooleanFormatting,
+        output_formatting: TableBooleanFormatting,
+    ) {
+        let input_table = TruthTable::new(vec!["ěýáíé", "ščřžň"], vec![true, false, true, false]);
+
+        let expected = replace_macros(
+            concat!(
+                "┌───────┬───────┬────────┐\n",
+                "│ ěýáíé │ ščřžň │ result │\n",
+                "├───────┼───────┼────────┤\n",
+                "│ o │ o │ I │\n",
+                "├───────┼───────┼────────┤\n",
+                "│ o │ i │ O │\n",
+                "├───────┼───────┼────────┤\n",
+                "│ i │ o │ I │\n",
+                "├───────┼───────┼────────┤\n",
+                "│ i │ i │ O │\n",
+                "└───────┴───────┴────────┘",
+            ),
+            &inputs_formatting,
+            &output_formatting,
+        );
+
+        let actual = input_table.to_string_formatted(
+            TableStyle::Modern,
+            inputs_formatting,
+            output_formatting,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[apply(formatting_template)]
+    fn test_markdown_ok(
+        inputs_formatting: TableBooleanFormatting,
+        output_formatting: TableBooleanFormatting,
+    ) {
+        let input_table = TruthTable::new(vec!["ěýáíé", "ščřžň"], vec![true, false, true, false]);
+
+        let expected = replace_macros(
+            concat!(
+                "| ěýáíé | ščřžň | result |\n",
+                "|-------|-------|--------|\n",
+                "| o | o | I |\n",
+                "| o | i | O |\n",
+                "| i | o | I |\n",
+                "| i | i | O |"
+            ),
+            &inputs_formatting,
+            &output_formatting,
+        );
+
+        let actual = input_table.to_string_formatted(
+            TableStyle::Markdown,
+            inputs_formatting,
+            output_formatting,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[apply(formatting_template)]
+    fn test_ascii_ok(
+        inputs_formatting: TableBooleanFormatting,
+        output_formatting: TableBooleanFormatting,
+    ) {
+        let input_table = TruthTable::new(vec!["ěýáíé", "ščřžň"], vec![true, false, true, false]);
+
+        let expected = replace_macros(
+            concat!(
+                "+-------+-------+--------+\n",
+                "| ěýáíé | ščřžň | result |\n",
+                "+-------+-------+--------+\n",
+                "| o | o | I |\n",
+                "+-------+-------+--------+\n",
+                "| o | i | O |\n",
+                "+-------+-------+--------+\n",
+                "| i | o | I |\n",
+                "+-------+-------+--------+\n",
+                "| i | i | O |\n",
+                "+-------+-------+--------+",
+            ),
+            &inputs_formatting,
+            &output_formatting,
+        );
+
+        let actual = input_table.to_string_formatted(
+            TableStyle::Ascii,
+            inputs_formatting,
+            output_formatting,
+        );
+
+        assert_eq!(expected, actual);
+    }
+}

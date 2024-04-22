@@ -72,47 +72,133 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Expression<TLiteral> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expressions::var;
+    use crate::expressions::{bool as boolFn, var};
 
     #[test]
-    fn test_evaluate_variables_match_ok() {
+    fn test_evaluate_variables_match_and_ok() {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true), ("b", true)];
         let mapping = HashMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
+        let expected_base = false;
 
-        assert_eq!(input.evaluate(&mapping), false);
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, true), false);
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
     #[test]
-    fn test_evaluate_too_many_variables_ok() {
+    fn test_evaluate_too_many_variables_and_ok() {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true), ("b", true), ("c", false)];
         let mapping = HashMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
+        let expected_base = false;
 
-        assert_eq!(input.evaluate(&mapping), false);
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, true), false);
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
     #[test]
-    fn test_evaluate_too_few_variables_ok() {
+    fn test_evaluate_too_few_variables_and_ok() {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true)];
         let mapping = HashMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
+        let expected_base = true;
 
-        assert_eq!(input.evaluate(&mapping), true);
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, true), false);
         assert_eq!(input.evaluate_checked(&mapping), Err(vec!["b".to_string()]));
+    }
+
+    #[test]
+    fn test_evaluate_variables_match_or_ok() {
+        let input = var("a") | var("b");
+
+        let pairs = [("a", false), ("b", false)];
+        let mapping = HashMap::<String, bool>::from_iter(
+            pairs.map(|(name, value)| (name.to_string(), value)),
+        );
+        let expected_base = false;
+
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert_eq!(input.evaluate_checked(&mapping), Ok(false));
+    }
+
+    #[test]
+    fn test_evaluate_too_many_variables_or_ok() {
+        let input = var("a") | var("b");
+
+        let pairs = [("a", false), ("b", false), ("c", true)];
+        let mapping = HashMap::<String, bool>::from_iter(
+            pairs.map(|(name, value)| (name.to_string(), value)),
+        );
+        let expected_base = false;
+
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert_eq!(input.evaluate_checked(&mapping), Ok(false));
+    }
+
+    #[test]
+    fn test_evaluate_too_few_variables_or_ok() {
+        let input = var("a") | var("b");
+
+        let pairs = [("a", false)];
+        let mapping = HashMap::<String, bool>::from_iter(
+            pairs.map(|(name, value)| (name.to_string(), value)),
+        );
+        let expected_base = false;
+
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert_eq!(input.evaluate_checked(&mapping), Err(vec!["b".to_string()]));
+    }
+
+    #[test]
+    fn test_evaluate_variables_match_const_ok() {
+        let input = boolFn(true) | boolFn(false);
+
+        let pairs: [(&str, bool); 0] = [];
+        let mapping = HashMap::<String, bool>::from_iter(
+            pairs.map(|(name, value)| (name.to_string(), value)),
+        );
+        let expected_base = true;
+
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert_eq!(input.evaluate_checked(&mapping), Ok(true));
+    }
+
+    #[test]
+    fn test_evaluate_too_many_variables_const_ok() {
+        let input = boolFn(true) | boolFn(false);
+
+        let pairs = [("a", false), ("b", false), ("c", true)];
+        let mapping = HashMap::<String, bool>::from_iter(
+            pairs.map(|(name, value)| (name.to_string(), value)),
+        );
+        let expected_base = true;
+
+        assert_eq!(input.evaluate(&mapping), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
+        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert_eq!(input.evaluate_checked(&mapping), Ok(true));
     }
 }

@@ -160,6 +160,17 @@ mod tests {
     }
 
     #[test]
+    fn test_to_expression_always_false_ok() {
+        let input_expression = var("x0") & !var("x0");
+        let input_table = TruthTable::from(input_expression.clone());
+
+        let actual = input_table.to_expression_trivial();
+        assert!(actual.semantic_eq(&input_expression));
+
+        assert_eq!(actual, bool(false));
+    }
+
+    #[test]
     fn test_to_expression_variableless_tautology_ok() {
         let input_expression = bool(true) | bool(false);
         let input_table = TruthTable::from(input_expression.clone());

@@ -34,14 +34,14 @@ impl TruthTable<String> {
     }
 
     pub fn from_csv_string(input: &str) -> Result<TruthTable<String>, TruthTableFromCsvError> {
-        let file_row_count = input.split('\n').count();
-
-        if file_row_count == 0 {
+        if input.is_empty() {
             return Ok(TruthTable {
                 inputs: vec![],
                 outputs: vec![],
             });
         }
+
+        let file_row_count = input.split('\n').count();
 
         Self::from_csv_common(file_row_count, Box::new(io::Cursor::new(input.to_string())))
     }

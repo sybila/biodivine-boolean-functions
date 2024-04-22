@@ -1,9 +1,9 @@
 use std::io;
 
-use pyo3::exceptions::{PyEOFError, PyIOError, PyRuntimeError, PyTypeError};
-use pyo3::PyErr;
-
 use crate::table::display_formatted::ALL_BOOL_STRINGS;
+
+#[cfg(feature = "python")]
+use pyo3::PyErr;
 
 // PartialEq and Eq is here due to checks in tests
 #[derive(Debug, thiserror::Error)]
@@ -38,6 +38,7 @@ pub enum TruthTableFromCsvError {
 #[cfg(feature = "python")]
 impl From<TruthTableFromCsvError> for PyErr {
     fn from(err: TruthTableFromCsvError) -> PyErr {
+        use pyo3::exceptions::{PyEOFError, PyIOError, PyRuntimeError, PyTypeError};
         use TruthTableFromCsvError::*;
 
         match err {

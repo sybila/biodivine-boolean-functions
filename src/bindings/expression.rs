@@ -22,6 +22,12 @@ impl From<RustExpression<String>> for PythonExpression {
 
 impl From<PythonExpression> for RustExpression<String> {
     fn from(value: PythonExpression) -> Self {
+        (&value).into()
+    }
+}
+
+impl From<&PythonExpression> for RustExpression<String> {
+    fn from(value: &PythonExpression) -> Self {
         // We can safely clone here because this only increases
         // the reference count of the root expression.
         value.root.clone()

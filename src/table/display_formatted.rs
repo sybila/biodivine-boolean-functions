@@ -6,7 +6,8 @@ use tabled::settings::{Padding, Style};
 
 use crate::table::TruthTable;
 
-#[derive(Default)]
+#[cfg_attr(feature = "python", pyo3::pyclass)]
+#[derive(Default, Copy, Clone)]
 pub enum TableStyle {
     Ascii,
     Modern,
@@ -29,7 +30,8 @@ impl TableStyle {
     }
 }
 
-#[derive(Default)]
+#[cfg_attr(feature = "python", pyo3::pyclass)]
+#[derive(Default, Copy, Clone)]
 pub enum TableBooleanFormatting {
     #[default]
     Number,

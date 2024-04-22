@@ -1,20 +1,23 @@
+use num_bigint::BigUint;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
-use num_bigint::BigUint;
 
-type BooleanPoint = Vec<bool>;
-type BooleanValuation<T> = HashMap<T, bool>;
+pub type BooleanPoint = Vec<bool>;
+pub type BooleanValuation<T> = HashMap<T, bool>;
 
 /// A trait implemented by a data structure which represents a Boolean function.
 ///
 /// In method descriptions, we write `n` to denote the number of variables supported by the
 /// function and `|F|` to denote the actual size of the function representation.
-trait BooleanFunction<T> : Sized where T: Debug + Clone + Eq + Hash {
-    type DomainIterator: Iterator<Item=BooleanPoint>;
-    type RangeIterator: Iterator<Item=bool>;
-    type RelationIterator: Iterator<Item=(BooleanPoint, bool)>;
-    type SupportIterator: Iterator<Item=BooleanPoint>;
+pub trait BooleanFunction<T>: Sized
+where
+    T: Debug + Clone + Eq + Hash,
+{
+    type DomainIterator: Iterator<Item = BooleanPoint>;
+    type RangeIterator: Iterator<Item = bool>;
+    type RelationIterator: Iterator<Item = (BooleanPoint, bool)>;
+    type SupportIterator: Iterator<Item = BooleanPoint>;
 
     /// A set of all the variable instances that (syntactically) appear in this Boolean
     /// function.
@@ -173,5 +176,4 @@ trait BooleanFunction<T> : Sized where T: Debug + Clone + Eq + Hash {
     /// Returns `true` if this function is *implied* by the `other` function. That is, it outputs
     /// `1` *at least* for those inputs where `other` outputs one.
     fn is_implied_by(&self, other: Self) -> bool;
-
 }

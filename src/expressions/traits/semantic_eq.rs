@@ -10,7 +10,7 @@ impl<TLiteral: Debug + Clone + Eq + Hash> SemanticEq<TLiteral> for Expression<TL
         let other_literals = other.gather_literals();
         let literals_union = HashSet::from_iter(self_literals.union(&other_literals).cloned());
 
-        let all_options = Self::generate_power_set(literals_union);
+        let all_options = Self::generate_arbitrary_power_set(literals_union);
 
         all_options.into_iter().all(|literal_settings| {
             self.evaluate(&literal_settings) == other.evaluate(&literal_settings)

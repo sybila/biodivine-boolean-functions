@@ -175,9 +175,11 @@ pub mod tests {
         let x = var("a");
         let y = Expression::negate(&x);
         let z = Expression::negate(&y);
+        let not_it = Expression::binary_and(&x, &x);
         assert!(x.is_literal());
         assert!(y.is_literal());
         assert!(!z.is_literal());
+        assert!(!not_it.is_literal());
     }
 
     #[test]
@@ -211,11 +213,22 @@ pub mod tests {
     }
 
     #[test]
-    fn distribute_basic() {
+    fn distribute_basic_and_right() {
         let input_left = var("a");
         let input_right = var("b") & var("c");
 
         let expected = (var("a") | var("b")) & (var("a") | var("c"));
+        let actual = Expression::distribute(&input_left, &input_right);
+
+        assert!(expected.semantic_eq(&actual));
+    }
+
+    #[test]
+    fn distribute_basic_and_left() {
+        let input_left = var("b") & var("c");
+        let input_right = var("a");
+
+        let expected = (var("b") | var("a")) & (var("c") | var("a"));
         let actual = Expression::distribute(&input_left, &input_right);
 
         assert!(expected.semantic_eq(&actual));
@@ -269,19 +282,44 @@ pub mod tests {
                 &Expression::binary_or(&x, &y),
                 &Expression::binary_or(&x, &y),
             ),
-            &Expression::binary_or(&x, &y),
+            &Expression::binary_or(&x, &Expression::negate(&y)),
         );
 
         let leveled = Expression::n_ary_and(&[
             Expression::binary_or(&x, &y),
             Expression::binary_or(&x, &y),
-            Expression::binary_or(&x, &y),
+            Expression::binary_or(&x, &Expression::negate(&y)),
         ]);
 
         assert!(nested.semantic_eq(&leveled));
 
         assert!(nested.is_cnf());
         assert!(leveled.is_cnf());
+    }
+
+    #[test]
+    fn is_not_cnf() {
+        assert!(!bool(true).is_cnf());
+
+        // We intentionally don't use the built-in operators because they would "level" the expression.
+        let x = var("x");
+        let y = var("y");
+
+        let nested = Expression::binary_or(
+            &Expression::binary_or(
+                &Expression::binary_and(&x, &y),
+                &Expression::binary_and(&x, &y),
+            ),
+            &Expression::binary_and(&x, &Expression::negate(&y)),
+        );
+        assert!(!nested.is_cnf());
+
+        let leveled = Expression::n_ary_or(&[
+            Expression::binary_and(&x, &y),
+            Expression::binary_and(&x, &y),
+            Expression::binary_and(&x, &Expression::negate(&y)),
+        ]);
+        assert!(!leveled.is_cnf());
     }
 
     #[test]

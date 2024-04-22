@@ -8,7 +8,7 @@ impl<TLiteral: Debug + Clone + Eq + Hash + Display> Display for Expression<TLite
         match self.node() {
             Constant(value) => write!(f, "{}", value),
             Literal(name) => write!(f, "{}", name),
-            Not(inner) => write!(f, "!{}", inner),
+            Not(inner) => write!(f, "!({})", inner),
             And(expressions) | Or(expressions) => write!(
                 f,
                 "({})",

@@ -1,14 +1,11 @@
 use crate::table::TruthTable;
 use crate::traits::{Evaluate, GatherLiterals, PowerSet, SemanticEq};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> SemanticEq<TLiteral>
-    for TruthTable<TLiteral>
-{
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> SemanticEq<TLiteral> for TruthTable<TLiteral> {
     fn semantic_eq(&self, other: &Self) -> bool {
-        let inputs_from_both = HashSet::from_iter(
+        let inputs_from_both = BTreeSet::from_iter(
             self.gather_literals()
                 .union(&other.gather_literals())
                 .cloned(),

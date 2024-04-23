@@ -1,17 +1,14 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
 use crate::table::utils::{values_to_row_index_checked, values_to_row_index_with_default};
 use crate::table::TruthTable;
 use crate::traits::Evaluate;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Evaluate<TLiteral>
-    for TruthTable<TLiteral>
-{
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> Evaluate<TLiteral> for TruthTable<TLiteral> {
     fn evaluate_with_default(
         &self,
-        literal_values: &HashMap<TLiteral, bool>,
+        literal_values: &BTreeMap<TLiteral, bool>,
         default_value: bool,
     ) -> bool {
         let index = values_to_row_index_with_default(&self.inputs, literal_values, default_value);
@@ -21,7 +18,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Evaluate<TLiteral>
 
     fn evaluate_checked(
         &self,
-        literal_values: &HashMap<TLiteral, bool>,
+        literal_values: &BTreeMap<TLiteral, bool>,
     ) -> Result<bool, Vec<TLiteral>> {
         let index = values_to_row_index_checked(&self.inputs, literal_values)?;
 
@@ -38,7 +35,7 @@ mod tests {
         let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
 
         let pairs = [("a", true), ("b", true)];
-        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+        let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
         assert_eq!(input_table.evaluate(&mapping), false);
         assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
@@ -50,7 +47,7 @@ mod tests {
         let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
 
         let pairs = [("a", true), ("b", true), ("c", false)];
-        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+        let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
         assert_eq!(input_table.evaluate(&mapping), false);
         assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
@@ -62,7 +59,7 @@ mod tests {
         let input_table = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
 
         let pairs = [("a", true)];
-        let mapping = HashMap::<&str, bool>::from_iter(pairs);
+        let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
         assert_eq!(input_table.evaluate(&mapping), true);
         assert_eq!(input_table.evaluate_with_default(&mapping, true), false);

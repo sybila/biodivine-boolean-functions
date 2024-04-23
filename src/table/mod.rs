@@ -1,5 +1,5 @@
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
+
 use std::iter::once;
 
 use crate::expressions::{Expression, ExpressionNode};
@@ -15,13 +15,13 @@ mod utils;
 #[derive(Debug, PartialEq, Eq)]
 pub struct TruthTable<TLiteral>
 where
-    TLiteral: Debug + Display + Clone + Eq + Hash,
+    TLiteral: Debug + Display + Clone + Eq + Ord,
 {
     inputs: Vec<TLiteral>,
     outputs: Vec<bool>,
 }
 
-impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
     fn new(inputs: Vec<TLiteral>, outputs: Vec<bool>) -> Self {
         Self { inputs, outputs }
     }

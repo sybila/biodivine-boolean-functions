@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader, Read};
@@ -140,8 +140,8 @@ fn parse_input_columns(
     record: &StringRecord,
     variable_column_index_map: &BTreeMap<String, usize>,
     csv_row_index: usize,
-) -> Result<HashMap<String, bool>, TruthTableFromCsvError> {
-    let mut valuation = HashMap::new();
+) -> Result<BTreeMap<String, bool>, TruthTableFromCsvError> {
+    let mut valuation = BTreeMap::new();
 
     for (key_var, column_index) in variable_column_index_map.iter() {
         let cell_value = record.get(*column_index).ok_or(
@@ -181,7 +181,7 @@ fn inputs_from_header(
 ) -> Result<BTreeMap<String, usize>, TruthTableFromCsvError> {
     let input_header_cells = header.iter().enumerate().take(header.len() - 1); // skip last element = output
 
-    let mut unique_test_set = HashSet::new();
+    let mut unique_test_set = BTreeSet::new();
     for (_index, name) in input_header_cells.clone() {
         if !unique_test_set.insert(name) {
             return Err(TruthTableFromCsvError::DuplicateVariableName {

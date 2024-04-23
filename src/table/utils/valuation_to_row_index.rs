@@ -1,28 +1,27 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
 // Any errors are ignored
-pub fn values_to_row_index<TLiteral: Debug + Clone + Eq + Hash + Ord>(
+pub fn values_to_row_index<TLiteral: Debug + Clone + Eq + Ord>(
     order: &[TLiteral],
-    valuation: &HashMap<TLiteral, bool>,
+    valuation: &BTreeMap<TLiteral, bool>,
 ) -> usize {
     let (index, _errors) = values_to_row_index_common(order, valuation, Some(false));
     index
 }
 
-pub fn values_to_row_index_with_default<TLiteral: Debug + Clone + Eq + Hash + Ord>(
+pub fn values_to_row_index_with_default<TLiteral: Debug + Clone + Eq + Ord>(
     order: &[TLiteral],
-    valuation: &HashMap<TLiteral, bool>,
+    valuation: &BTreeMap<TLiteral, bool>,
     default_value: bool,
 ) -> usize {
     let (index, _errors) = values_to_row_index_common(order, valuation, Some(default_value));
     index
 }
 
-pub fn values_to_row_index_checked<TLiteral: Debug + Display + Clone + Eq + Hash + Ord>(
+pub fn values_to_row_index_checked<TLiteral: Debug + Display + Clone + Eq + Ord>(
     order: &[TLiteral],
-    valuation: &HashMap<TLiteral, bool>,
+    valuation: &BTreeMap<TLiteral, bool>,
 ) -> Result<usize, Vec<TLiteral>> {
     let (index, errors) = values_to_row_index_common(order, valuation, None);
 
@@ -33,9 +32,9 @@ pub fn values_to_row_index_checked<TLiteral: Debug + Display + Clone + Eq + Hash
     }
 }
 
-fn values_to_row_index_common<TLiteral: Debug + Clone + Eq + Hash + Ord>(
+fn values_to_row_index_common<TLiteral: Debug + Clone + Eq + Ord>(
     order: &[TLiteral],
-    valuation: &HashMap<TLiteral, bool>,
+    valuation: &BTreeMap<TLiteral, bool>,
     default_value: Option<bool>,
 ) -> (usize, Vec<TLiteral>) {
     let result = order
@@ -76,7 +75,7 @@ mod tests {
     #[rstest]
     fn test_common_nodefault_unknownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true)]);
         let default = None;
 
         let (_index, errors) = values_to_row_index_common(&order, &valuation, default);
@@ -88,7 +87,7 @@ mod tests {
     #[rstest]
     fn test_common_defaultfalse_unknownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true)]);
         let default = Some(false);
 
         let expected_index = 1usize << 1;
@@ -102,7 +101,7 @@ mod tests {
     #[rstest]
     fn test_common_defaulttrue_unknownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true)]);
         let default = Some(true);
 
         let expected_index = (1usize << 1) + (1usize << 0);
@@ -116,7 +115,7 @@ mod tests {
     #[rstest]
     fn test_common_nodefault_knownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true), ("2", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true), ("2", true)]);
         let default = None;
 
         let expected_index = (1usize << 1) + (1usize << 0);
@@ -130,7 +129,7 @@ mod tests {
     #[rstest]
     fn test_common_defaultfalse_knownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true), ("2", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true), ("2", true)]);
         let default = Some(false);
 
         let expected_index = (1usize << 1) + (1usize << 0);
@@ -144,7 +143,7 @@ mod tests {
     #[rstest]
     fn test_common_defaulttrue_knownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true), ("2", false)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true), ("2", false)]);
         let default = Some(true);
 
         let expected_index = 1usize << 1;
@@ -158,7 +157,7 @@ mod tests {
     #[rstest]
     fn test_checked_unknownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true)]);
 
         let actual = values_to_row_index_checked(&order, &valuation);
         let expected = Err(vec!["2"]);
@@ -169,7 +168,7 @@ mod tests {
     #[rstest]
     fn test_checked_knownvar() {
         let order = vec!["1", "2"];
-        let valuation = HashMap::from_iter(vec![("1", true), ("2", true)]);
+        let valuation = BTreeMap::from_iter(vec![("1", true), ("2", true)]);
 
         let actual = values_to_row_index_checked(&order, &valuation);
         let expected = Ok((1usize << 1) + (1usize << 0));

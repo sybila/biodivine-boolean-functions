@@ -1,13 +1,12 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Debug;
-use std::hash::Hash;
 
-pub trait GatherLiterals<TLiteral: Debug + Clone + Eq + Hash> {
-    fn gather_literals(&self) -> HashSet<TLiteral> {
-        let mut result = HashSet::new();
+pub trait GatherLiterals<TLiteral: Debug + Clone + Eq + Ord> {
+    fn gather_literals(&self) -> BTreeSet<TLiteral> {
+        let mut result = BTreeSet::new();
         self.gather_literals_rec(&mut result);
         result
     }
 
-    fn gather_literals_rec(&self, current: &mut HashSet<TLiteral>);
+    fn gather_literals_rec(&self, current: &mut BTreeSet<TLiteral>);
 }

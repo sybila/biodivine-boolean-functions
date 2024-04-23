@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use pyo3::PyResult;
@@ -39,13 +39,13 @@ impl PythonTruthTable {
             .to_string_formatted(style, boolean_formatting, boolean_formatting)
     }
 
-    pub fn gather_literals(&self) -> HashSet<String> {
+    pub fn gather_literals(&self) -> BTreeSet<String> {
         self.root.gather_literals()
     }
 
     /// Throws a `KeyError` when a variable is encountered that isn't found among
     /// the given `literal_values`.
-    pub fn evaluate_checked(&self, literal_values: HashMap<String, bool>) -> PyResult<bool> {
+    pub fn evaluate_checked(&self, literal_values: BTreeMap<String, bool>) -> PyResult<bool> {
         Ok(self
             .root
             .evaluate_checked(&literal_values)
@@ -53,14 +53,14 @@ impl PythonTruthTable {
     }
 
     /// Variables not in the dictionary default to false.
-    pub fn evaluate_safe(&self, literal_values: HashMap<String, bool>) -> PyResult<bool> {
+    pub fn evaluate_safe(&self, literal_values: BTreeMap<String, bool>) -> PyResult<bool> {
         Ok(self.root.evaluate(&literal_values))
     }
 
     /// Variables not in the dictionary defaults to the passed `default_value` argument.
     pub fn evaluate_with_default(
         &self,
-        literal_values: HashMap<String, bool>,
+        literal_values: BTreeMap<String, bool>,
         default_value: bool,
     ) -> PyResult<bool> {
         Ok(self

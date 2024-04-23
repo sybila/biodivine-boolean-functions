@@ -5,7 +5,7 @@ use std::hash::Hash;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ExpressionNode<T>
 where
-    T: Debug + Clone + Eq + Hash,
+    T: Debug + Clone + Eq + Ord,
 {
     Literal(T),
     Constant(bool),

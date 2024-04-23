@@ -1,5 +1,4 @@
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
 use tabled::builder::Builder;
 use tabled::settings::{Padding, Style};
@@ -96,7 +95,7 @@ impl TableBooleanFormatting {
     }
 }
 
-impl<TLiteral: Debug + Clone + Display + Eq + Hash> TruthTable<TLiteral> {
+impl<TLiteral: Debug + Clone + Display + Eq + Ord> TruthTable<TLiteral> {
     pub fn to_string_formatted(
         &self,
         table_style: TableStyle,

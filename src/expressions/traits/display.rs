@@ -2,9 +2,8 @@ use crate::expressions::Expression;
 use crate::expressions::ExpressionNode::{And, Constant, Literal, Not, Or};
 use itertools::Itertools;
 use std::fmt::{Debug, Display, Error, Formatter};
-use std::hash::Hash;
 
-impl<TLiteral: Debug + Clone + Eq + Hash + Display> Display for Expression<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord + Display> Display for Expression<TLiteral> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self.node() {
             Constant(value) => write!(f, "{}", value),
@@ -16,7 +15,7 @@ impl<TLiteral: Debug + Clone + Eq + Hash + Display> Display for Expression<TLite
     }
 }
 
-impl<TLiteral: Debug + Clone + Eq + Hash + Display> Expression<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord + Display> Expression<TLiteral> {
     fn fmt_nary_expression(
         f: &mut Formatter,
         expressions: &[Expression<TLiteral>],

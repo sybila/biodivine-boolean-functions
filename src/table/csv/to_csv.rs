@@ -2,9 +2,8 @@ use crate::table::display_formatted::TableBooleanFormatting;
 use crate::table::TruthTable;
 use itertools::Itertools;
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Hash> TruthTable<TLiteral> {
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
     pub fn to_csv(&self) -> String {
         self.to_csv_formatted(
             ',',

@@ -1,15 +1,15 @@
 use crate::expressions::Expression;
 use crate::expressions::ExpressionNode::{And, Constant, Literal, Not, Or};
 use crate::traits::Evaluate;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
-use std::hash::Hash;
+
 use std::ops::{BitAnd, BitOr};
 
-impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> Evaluate<TLiteral> for Expression<TLiteral> {
     fn evaluate_with_default(
         &self,
-        literal_values: &HashMap<TLiteral, bool>,
+        literal_values: &BTreeMap<TLiteral, bool>,
         default_value: bool,
     ) -> bool {
         match self.node() {
@@ -27,7 +27,7 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
 
     fn evaluate_checked(
         &self,
-        literal_values: &HashMap<TLiteral, bool>,
+        literal_values: &BTreeMap<TLiteral, bool>,
     ) -> Result<bool, Vec<TLiteral>> {
         let mut errors = vec![];
 
@@ -41,10 +41,10 @@ impl<TLiteral: Debug + Clone + Eq + Hash> Evaluate<TLiteral> for Expression<TLit
     }
 }
 
-impl<TLiteral: Debug + Clone + Eq + Hash> Expression<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> Expression<TLiteral> {
     fn evaluate_checked_rec(
         &self,
-        literal_values: &HashMap<TLiteral, bool>,
+        literal_values: &BTreeMap<TLiteral, bool>,
         err_values: &mut Vec<TLiteral>,
     ) -> bool {
         match self.node() {
@@ -79,7 +79,7 @@ mod tests {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true), ("b", true)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = false;
@@ -95,7 +95,7 @@ mod tests {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true), ("b", true), ("c", false)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = false;
@@ -111,7 +111,7 @@ mod tests {
         let input = !(var("a") & var("b"));
 
         let pairs = [("a", true)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = true;
@@ -127,7 +127,7 @@ mod tests {
         let input = var("a") | var("b");
 
         let pairs = [("a", false), ("b", false)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = false;
@@ -143,7 +143,7 @@ mod tests {
         let input = var("a") | var("b");
 
         let pairs = [("a", false), ("b", false), ("c", true)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = false;
@@ -159,7 +159,7 @@ mod tests {
         let input = var("a") | var("b");
 
         let pairs = [("a", false)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = false;
@@ -175,7 +175,7 @@ mod tests {
         let input = boolFn(true) | boolFn(false);
 
         let pairs: [(&str, bool); 0] = [];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = true;
@@ -191,7 +191,7 @@ mod tests {
         let input = boolFn(true) | boolFn(false);
 
         let pairs = [("a", false), ("b", false), ("c", true)];
-        let mapping = HashMap::<String, bool>::from_iter(
+        let mapping = BTreeMap::<String, bool>::from_iter(
             pairs.map(|(name, value)| (name.to_string(), value)),
         );
         let expected_base = true;

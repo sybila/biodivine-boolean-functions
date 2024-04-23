@@ -145,7 +145,7 @@ mod tests {
         assert!(actual.semantic_eq(&input_expression));
 
         // this inner is equal to input
-        assert_eq!(actual, Expression::n_ary_or(&vec![input_expression]));
+        assert_eq!(actual, Expression::n_ary_or(&[input_expression]));
     }
 
     #[test]

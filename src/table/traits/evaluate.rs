@@ -37,8 +37,8 @@ mod tests {
         let pairs = [("a", true), ("b", true)];
         let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
-        assert_eq!(input_table.evaluate(&mapping), false);
-        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert!(!input_table.evaluate(&mapping));
+        assert!(!input_table.evaluate_with_default(&mapping, true));
         assert_eq!(input_table.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -49,8 +49,8 @@ mod tests {
         let pairs = [("a", true), ("b", true), ("c", false)];
         let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
-        assert_eq!(input_table.evaluate(&mapping), false);
-        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert!(!input_table.evaluate(&mapping));
+        assert!(!input_table.evaluate_with_default(&mapping, true));
         assert_eq!(input_table.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -61,8 +61,8 @@ mod tests {
         let pairs = [("a", true)];
         let mapping = BTreeMap::<&str, bool>::from_iter(pairs);
 
-        assert_eq!(input_table.evaluate(&mapping), true);
-        assert_eq!(input_table.evaluate_with_default(&mapping, true), false);
+        assert!(input_table.evaluate(&mapping));
+        assert!(!input_table.evaluate_with_default(&mapping, true));
         assert_eq!(input_table.evaluate_checked(&mapping), Err(vec!["b"]));
     }
 }

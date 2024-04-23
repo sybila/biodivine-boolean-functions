@@ -86,7 +86,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert!(!input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -102,7 +102,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert!(!input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -118,7 +118,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert!(!input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Err(vec!["b".to_string()]));
     }
 
@@ -134,7 +134,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert!(!input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -150,7 +150,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), false);
+        assert!(!input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(false));
     }
 
@@ -166,7 +166,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert!(input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Err(vec!["b".to_string()]));
     }
 
@@ -182,7 +182,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert!(input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(true));
     }
 
@@ -198,7 +198,7 @@ mod tests {
 
         assert_eq!(input.evaluate(&mapping), expected_base);
         assert_eq!(input.evaluate_with_default(&mapping, false), expected_base);
-        assert_eq!(input.evaluate_with_default(&mapping, true), true);
+        assert!(input.evaluate_with_default(&mapping, true));
         assert_eq!(input.evaluate_checked(&mapping), Ok(true));
     }
 }

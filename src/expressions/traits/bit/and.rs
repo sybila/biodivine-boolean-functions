@@ -1,8 +1,7 @@
 use crate::expressions::{Expression, ExpressionNode::And};
 use std::fmt::Debug;
-use std::hash::Hash;
 
-impl<T: Debug + Clone + Eq + Hash> std::ops::BitAnd<Expression<T>> for Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> std::ops::BitAnd<Expression<T>> for Expression<T> {
     type Output = Expression<T>;
 
     fn bitand(self, rhs: Expression<T>) -> Self::Output {

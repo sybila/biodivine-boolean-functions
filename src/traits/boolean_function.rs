@@ -1,10 +1,9 @@
 use num_bigint::BigUint;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
-use std::hash::Hash;
 
 pub type BooleanPoint = Vec<bool>;
-pub type BooleanValuation<T> = HashMap<T, bool>;
+pub type BooleanValuation<T> = BTreeMap<T, bool>;
 
 /// A trait implemented by a data structure which represents a Boolean function.
 ///
@@ -12,7 +11,7 @@ pub type BooleanValuation<T> = HashMap<T, bool>;
 /// function and `|F|` to denote the actual size of the function representation.
 pub trait BooleanFunction<T>: Sized
 where
-    T: Debug + Clone + Eq + Hash,
+    T: Debug + Clone + Eq + Ord,
 {
     type DomainIterator: Iterator<Item = BooleanPoint>;
     type RangeIterator: Iterator<Item = bool>;
@@ -32,7 +31,7 @@ where
     ///
     /// This operation should be at worst `O(|F|)` for any function representation.
     ///
-    fn inputs(&self) -> HashSet<T>;
+    fn inputs(&self) -> BTreeSet<T>;
 
     /// A set of all variable instances that are *essential* in this Boolean function.
     ///
@@ -60,7 +59,7 @@ where
     ///  * Expression: The operation is non-trivial, as we need to determine for each variable
     ///    whether `F[v = 0]` and `F[v = 1]` are semantically equal.
     ///
-    fn essential_inputs(&self) -> HashSet<T>;
+    fn essential_inputs(&self) -> BTreeSet<T>;
 
     /// The number of variables that (syntactically) appear in this Boolean function.
     ///
@@ -126,7 +125,7 @@ where
     /// Note that the same variable can be substituted and at the same time appear in one of the
     /// substituted functions (as in the example). Also note that this operation can increase the
     /// degree of a function if the substituted functions contain previously unused variables.
-    fn substitute(&self, mapping: HashMap<T, Self>) -> Self;
+    fn substitute(&self, mapping: BTreeMap<T, Self>) -> Self;
 
     /// Produce one [BooleanPoint] for which this function evaluates to `1`, i.e. one of the
     /// points in [BooleanFunction::support].
@@ -148,7 +147,7 @@ where
     /// function is satisfied for input `x` if there *exists* a value `b` of `v` such that the
     /// original function was satisfied for `x[v=b]`.
     ///
-    fn existential_quantification(&self, variables: HashSet<T>) -> Self;
+    fn existential_quantification(&self, variables: BTreeSet<T>) -> Self;
 
     /// Eliminate the specified `variables` using *universal* quantification. The resulting
     /// function does not depend on any of the eliminated variables.
@@ -157,7 +156,7 @@ where
     /// function is satisfied for `x` if the original function was satisfied for both `x[v=0]`
     /// and `x[v=1]`.
     ///
-    fn universal_quantification(&self, variables: HashSet<T>) -> Self;
+    fn universal_quantification(&self, variables: BTreeSet<T>) -> Self;
 
     /// Computes the derivative of this function with respect to the given `variables`.
     /// The resulting function does not depend on any of the eliminated variables.
@@ -167,7 +166,7 @@ where
     /// (Hence the name "derivative": the result is a function that is true for all inputs in
     /// which the input function can change its value).
     ///
-    fn derivative(&self, variables: HashSet<T>) -> Self;
+    fn derivative(&self, variables: BTreeSet<T>) -> Self;
 
     /// Returns `true` if the two functions are *semantically* equivalent. That is, they output
     /// the same values for the same inputs.

@@ -1,6 +1,6 @@
 use crate::expressions::structs::ExpressionNode;
 use crate::expressions::structs::ExpressionNode::{And, Constant, Literal, Not, Or};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::sync::Arc;
@@ -8,15 +8,15 @@ use std::sync::Arc;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Expression<T>(Arc<ExpressionNode<T>>)
 where
-    T: Debug + Clone + Eq + Hash;
+    T: Debug + Clone + Eq + Ord;
 
-impl<T: Debug + Clone + Eq + Hash> From<ExpressionNode<T>> for Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> From<ExpressionNode<T>> for Expression<T> {
     fn from(value: ExpressionNode<T>) -> Self {
         Expression(Arc::new(value))
     }
 }
 
-impl<T: Debug + Clone + Eq + Hash> Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> Expression<T> {
     pub fn node(&self) -> &ExpressionNode<T> {
         self.0.as_ref()
     }
@@ -143,7 +143,7 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
         }
     }
 
-    pub fn rename_literals(&self, mapping: &HashMap<T, T>) -> Self {
+    pub fn rename_literals(&self, mapping: &BTreeMap<T, T>) -> Self {
         match self.node() {
             Literal(name) => Literal(mapping.get(name).unwrap_or(name).clone()),
             Constant(value) => Constant(*value),
@@ -163,7 +163,7 @@ impl<T: Debug + Clone + Eq + Hash> Expression<T> {
 
 #[cfg(test)]
 pub mod tests {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use crate::traits::SemanticEq;
 
@@ -325,7 +325,8 @@ pub mod tests {
     #[test]
     fn test_rename_literals_ok() {
         let pairs = [("a", "1"), ("b", "2"), ("c", "3"), ("d", "4"), ("e", "5")];
-        let mapping = HashMap::from_iter(pairs.iter().map(|(x, y)| (x.to_string(), y.to_string())));
+        let mapping =
+            BTreeMap::from_iter(pairs.iter().map(|(x, y)| (x.to_string(), y.to_string())));
 
         let input = var("a") | var("b") | (var("c") & var("d")) | bool(true) | !var("a");
         let expected = var("1") | var("2") | (var("3") & var("4")) | bool(true) | !var("1");

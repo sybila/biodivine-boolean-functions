@@ -1,12 +1,11 @@
 use std::fmt::{Debug, Display};
-use std::hash::Hash;
 
 use crate::expressions::Expression;
 use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
 use crate::traits::{Evaluate, GatherLiterals, PowerSet};
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<Expression<TLiteral>>
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> From<Expression<TLiteral>>
     for TruthTable<TLiteral>
 {
     fn from(expression: Expression<TLiteral>) -> Self {
@@ -14,7 +13,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<Expression<TLiter
     }
 }
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord + Hash> From<&Expression<TLiteral>>
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> From<&Expression<TLiteral>>
     for TruthTable<TLiteral>
 {
     fn from(expression: &Expression<TLiteral>) -> Self {

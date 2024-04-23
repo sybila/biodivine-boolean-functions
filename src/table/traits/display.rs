@@ -1,10 +1,9 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::hash::Hash;
 
 use crate::table::display_formatted::{TableBooleanFormatting, TableStyle};
 use crate::table::TruthTable;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Hash + Ord> Display for TruthTable<TLiteral> {
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> Display for TruthTable<TLiteral> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

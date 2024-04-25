@@ -96,7 +96,9 @@ where
     /// The number of input points for which this function evaluates to `1`.
     ///
     /// See also [BooleanFunction::support].
-    fn weight(&self) -> BigUint;
+    fn weight(&self) -> BigUint {
+        self.support().count().into()
+    }
 
     /// Create a Boolean function that is a restriction of this function for the given variables.
     ///

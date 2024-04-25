@@ -1,4 +1,4 @@
-pub fn row_index_to_valuation(mut row_index: usize, min_target_len: usize) -> Vec<bool> {
+pub fn row_index_to_bool_point(mut row_index: usize, min_target_len: usize) -> Vec<bool> {
     let mut result = vec![];
 
     while row_index > 0 {

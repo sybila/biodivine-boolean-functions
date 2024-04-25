@@ -4,6 +4,7 @@ pub mod expressions;
 pub mod parser;
 pub mod table;
 pub mod traits;
+mod utils;
 
 #[allow(clippy::single_component_path_imports)] // The use is required by the rstest_reuse crate
 #[cfg(test)]

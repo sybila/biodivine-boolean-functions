@@ -1,4 +1,5 @@
 mod bit;
+mod boolean_function;
 mod display;
 mod evaluate;
 mod gather_literals;

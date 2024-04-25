@@ -1,6 +1,7 @@
 mod and;
 mod not;
 mod or;
+mod xor;
 
 #[cfg(test)]
 mod tests {

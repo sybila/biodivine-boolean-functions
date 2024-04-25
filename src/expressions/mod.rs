@@ -1,5 +1,6 @@
 pub use structs::{Expression, ExpressionNode};
 
+mod iterators;
 mod structs;
 mod traits;
 

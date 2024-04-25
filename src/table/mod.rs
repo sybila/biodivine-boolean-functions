@@ -4,7 +4,7 @@ use std::iter::once;
 
 use crate::expressions::{Expression, ExpressionNode};
 use crate::table::display_formatted::TableBooleanFormatting;
-use crate::utils::row_index_to_valuation;
+use crate::utils::row_index_to_bool_point;
 
 #[cfg(feature = "csv")]
 pub mod csv;
@@ -103,7 +103,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
     }
 
     pub fn row(&self, row_index: usize) -> Vec<bool> {
-        row_index_to_valuation(row_index, self.variable_count())
+        row_index_to_bool_point(row_index, self.variable_count())
     }
 
     fn header_row_iterator(&self) -> impl Iterator<Item = String> + '_ {
@@ -120,7 +120,7 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
         inputs_formatting: &TableBooleanFormatting,
         output_formatting: &TableBooleanFormatting,
     ) -> Vec<String> {
-        row_index_to_valuation(row_index, self.variable_count())
+        row_index_to_bool_point(row_index, self.variable_count())
             .iter()
             .map(move |value| inputs_formatting.format_bool(value))
             .chain(once(output_value).map(move |value| output_formatting.format_bool(value)))

@@ -7,8 +7,9 @@ use std::path::Path;
 use csv::{ReaderBuilder, StringRecord};
 
 use crate::table::csv::error::TruthTableFromCsvError;
+use crate::table::csv::utils::string_to_bool;
 use crate::table::display_formatted::ALL_BOOL_STRINGS;
-use crate::table::utils::{string_to_bool, values_to_row_index};
+use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
 
 // a;b;c;d;whatever           <-- maybe header

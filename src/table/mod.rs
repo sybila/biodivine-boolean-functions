@@ -4,7 +4,7 @@ use std::iter::once;
 
 use crate::expressions::{Expression, ExpressionNode};
 use crate::table::display_formatted::TableBooleanFormatting;
-use crate::table::utils::row_index_to_valuation;
+use crate::utils::row_index_to_valuation;
 
 #[cfg(feature = "csv")]
 pub mod csv;

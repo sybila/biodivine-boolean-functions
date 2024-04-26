@@ -116,8 +116,65 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
 #[cfg(test)]
 mod tests {
     use crate::expressions::{bool, var, Expression};
-    use crate::traits::{BooleanFunction, SemanticEq};
-    use std::collections::BTreeMap;
+    use crate::table::TruthTable;
+    use crate::traits::{BooleanFunction, Implication, SemanticEq};
+    use std::collections::{BTreeMap, BTreeSet};
+
+    #[test]
+    fn test_inputs_ok() {
+        for var_count in 0..100 {
+            let vars = (0..var_count).map(var).collect::<Vec<_>>();
+            let input = Expression::n_ary_and(&vars);
+
+            let expected = BTreeSet::from_iter((0..var_count).map(|c| c.to_string()));
+            let actual = input.inputs();
+
+            assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn test_essential_inputs_all_inputs_ok() {
+        let input = var("a") & var("b");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_essential_inputs_no_inputs_ok() {
+        let input = (var("a") & var("b")).imply(var("c") | !var("c"));
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::new();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_essential_inputs_some_inputs_ok() {
+        // the boolean function doesn't depend on Z, but does on X and Y
+        let input = TruthTable::from_csv_string(concat!(
+            "x,y,z,output\n",
+            "0,0,1,1\n",
+            "0,0,0,1\n",
+            "0,1,1,0\n",
+            "0,1,0,0\n",
+            "1,0,1,0\n",
+            "1,0,0,0\n",
+            "1,1,1,0\n",
+            "1,1,0,0\n",
+        ))
+        .unwrap()
+        .to_expression_trivial();
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["x".to_string(), "y".to_string()]);
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn test_restrict_ok() {

@@ -25,8 +25,12 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Expression<T> {
             .into_iter()
             .filter(|input| {
                 let true_valuation = BTreeMap::from([(input.clone(), true)]);
+                let true_fixation = self.restrict(&true_valuation);
+
                 let false_valuation = BTreeMap::from([(input.clone(), false)]);
-                self.evaluate(&true_valuation) != self.evaluate(&false_valuation)
+                let false_fixation = self.restrict(&false_valuation);
+
+                !true_fixation.semantic_eq(&false_fixation)
             })
             .collect()
     }

@@ -178,14 +178,15 @@ mod tests {
 
     #[test]
     fn test_substitute_variables_same_ok() {
-        let input = (var("a") | var("b")) & var("c") & !var("a");
+        let input = (var("a") | var("b")) & var("c") & !var("a") & bool(true);
         let mapping = BTreeMap::from_iter([("a".to_string(), var("a") | !var("b"))]);
 
         // cannot use `var("a") | !var("b") | var("b")` for defining expected here
         // since that collapses Or(Or(a, !b), b), which substitute doesn't do
         let expected = Expression::n_ary_or(&[var("a") | !var("b"), var("b")])
             & var("c")
-            & !(var("a") | !var("b"));
+            & !(var("a") | !var("b"))
+            & bool(true);
         let actual = input.substitute(&mapping);
 
         assert_eq!(expected, actual);
@@ -195,15 +196,17 @@ mod tests {
 
     #[test]
     fn test_substitute_variables_added_ok() {
-        let input = (var("a") | var("b")) & var("c") & !var("a");
+        let input = (var("a") | var("b")) & var("c") & !var("a") & bool(true);
 
         let new_value = var("ddd") & (bool(false) | var("a"));
         let mapping = BTreeMap::from_iter([("a".to_string(), new_value.clone())]);
 
         // cannot use bitwise operators for defining expected here
         // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-        let expected =
-            Expression::n_ary_or(&[new_value.clone(), var("b")]) & var("c") & !new_value.clone();
+        let expected = Expression::n_ary_or(&[new_value.clone(), var("b")])
+            & var("c")
+            & !new_value.clone()
+            & bool(true);
         let actual = input.substitute(&mapping);
 
         assert_eq!(expected, actual);
@@ -216,15 +219,17 @@ mod tests {
 
     #[test]
     fn test_substitute_variables_removed_ok() {
-        let input = (var("a") | var("b")) & var("c") & !var("a");
+        let input = (var("a") | var("b")) & var("c") & !var("a") & bool(true);
 
         let new_value = bool(false);
         let mapping = BTreeMap::from_iter([("a".to_string(), new_value.clone())]);
 
         // cannot use bitwise operators for defining expected here
         // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-        let expected =
-            Expression::n_ary_or(&[new_value.clone(), var("b")]) & var("c") & !new_value.clone();
+        let expected = Expression::n_ary_or(&[new_value.clone(), var("b")])
+            & var("c")
+            & !new_value.clone()
+            & bool(true);
         let actual = input.substitute(&mapping);
 
         assert_eq!(expected, actual);

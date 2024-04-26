@@ -1,11 +1,12 @@
 use crate::expressions::Expression;
-use crate::expressions::ExpressionNode::Not;
+use crate::expressions::ExpressionNode;
 use std::fmt::Debug;
+use std::ops::Not;
 
-impl<T: Debug + Clone + Eq + Ord> std::ops::Not for Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> Not for Expression<T> {
     type Output = Expression<T>;
 
     fn not(self) -> Self::Output {
-        Not(self).into()
+        ExpressionNode::Not(self).into()
     }
 }

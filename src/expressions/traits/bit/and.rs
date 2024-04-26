@@ -1,11 +1,13 @@
 use crate::expressions::{Expression, ExpressionNode::And};
 use std::fmt::Debug;
+use std::ops::BitAnd;
 
-impl<T: Debug + Clone + Eq + Ord> std::ops::BitAnd<Expression<T>> for Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> BitAnd<Expression<T>> for Expression<T> {
     type Output = Expression<T>;
 
     fn bitand(self, rhs: Expression<T>) -> Self::Output {
         let mut es = Vec::new();
+
         match (self.node(), rhs.node()) {
             (And(es1), And(es2)) => {
                 es.extend(es1.iter().cloned());

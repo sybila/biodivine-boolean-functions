@@ -1,8 +1,9 @@
 use crate::expressions::Expression;
 use crate::expressions::ExpressionNode::Or;
 use std::fmt::Debug;
+use std::ops::BitOr;
 
-impl<T: Debug + Clone + Eq + Ord> std::ops::BitOr<Expression<T>> for Expression<T> {
+impl<T: Debug + Clone + Eq + Ord> BitOr<Expression<T>> for Expression<T> {
     type Output = Expression<T>;
 
     fn bitor(self, rhs: Expression<T>) -> Self::Output {

@@ -179,3 +179,105 @@ where
     /// `1` *at least* for those inputs where `other` outputs one.
     fn is_implied_by(&self, other: &Self) -> bool;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expressions::{bool, var, Expression};
+    use crate::table::TruthTable;
+    use crate::traits::{GatherLiterals, Implication, SemanticEq};
+
+    #[test]
+    fn test_degree() {
+        let ascii_start = '!';
+        for var_count in ascii_start..'}' {
+            let vars = (ascii_start..var_count)
+                .map(|c: char| var(c))
+                .collect::<Vec<_>>();
+            let input = Expression::n_ary_and(&vars);
+
+            let expected = var_count as usize - ascii_start as usize;
+            let actual = input.degree();
+
+            assert_eq!(expected, actual);
+        }
+    }
+
+    #[test]
+    fn test_essential_degree() {
+        // the boolean function doesn't depend on Z, but does on X and Y
+        // "x,y,z,output\n",
+        // "0,0,1,1\n",
+        // "0,0,0,1\n",
+        // "0,1,1,0\n",
+        // "0,1,0,0\n",
+        // "1,0,1,0\n",
+        // "1,0,0,0\n",
+        // "1,1,1,0\n",
+        // "1,1,0,0\n",
+
+        let input = TruthTable::new(
+            vec!["x", "y", "z"],
+            vec![false, false, true, true, true, true, true, true],
+        )
+        .to_expression_trivial();
+
+        let actual = input.essential_degree();
+        let expected = BTreeSet::from_iter(["x", "y"]).len();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_saturating_point_some() {
+        let input = var("0") & var("1") & var("2");
+
+        let actual = input.sat_point();
+        let expected = Some(vec![true, true, true]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_saturating_none() {
+        // (p ∨ q) ∧ (¬p) ∧ (¬q)
+        let input = Expression::n_ary_and(&[var("a") | var("b"), !var("a"), !var("b")]);
+
+        let actual = input.sat_point();
+        let expected = None;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_one() {
+        let input = var("0") & var("1") & var("2");
+
+        let actual = input.weight();
+        let expected = BigUint::from(1u8);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_zero() {
+        let input = Expression::n_ary_and(&[var("a") | var("b"), !var("a"), !var("b")]);
+
+        let actual = input.weight();
+        let expected = BigUint::from(0u8);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_all() {
+        // tautology
+        let input = ((var("A").imply(var("B"))) & (!var("A").imply(!var("B")))).imply(var("A"));
+        assert!(input.semantic_eq(&bool(true)));
+
+        let actual = input.weight();
+        let expected = 2usize.pow(input.gather_literals().len() as u32).into();
+
+        assert_eq!(actual, expected);
+    }
+}

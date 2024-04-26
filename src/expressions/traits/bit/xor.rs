@@ -18,8 +18,24 @@ mod tests {
     #[test]
     fn test_xor() {
         let actual = var("a") ^ var("b");
-        let expected = (var("a") & !var("b")) | (!var("a") & var("b"));
 
-        assert!(actual.semantic_eq(&expected));
+        let expected_alternative_xor = (var("a") & !var("b")) | (!var("a") & var("b"));
+        let expected_actual_xor = (var("a") | var("b")) & !(var("a") & var("b"));
+
+        assert!(actual.semantic_eq(&expected_alternative_xor));
+        assert_eq!(actual, expected_actual_xor);
+    }
+
+    #[test]
+    fn test_xor_merge() {
+        let actual = (var("a") | var("b")) ^ (var("c") & var("d"));
+
+        let expected_alternative_xor = ((var("a") | var("b")) & !(var("c") & var("d")))
+            | (!(var("a") | var("b")) & (var("c") & var("d")));
+        let expected_actual_xor = ((var("a") | var("b")) | (var("c") & var("d")))
+            & !((var("a") | var("b")) & (var("c") & var("d")));
+
+        assert!(actual.semantic_eq(&expected_alternative_xor));
+        assert_eq!(actual, expected_actual_xor);
     }
 }

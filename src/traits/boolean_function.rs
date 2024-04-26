@@ -128,7 +128,7 @@ where
     /// Note that the same variable can be substituted and at the same time appear in one of the
     /// substituted functions (as in the example). Also note that this operation can increase the
     /// degree of a function if the substituted functions contain previously unused variables.
-    fn substitute(&self, mapping: BTreeMap<T, Self>) -> Self;
+    fn substitute(&self, mapping: &BTreeMap<T, Self>) -> Self;
 
     /// Produce one [BooleanPoint] for which this function evaluates to `1`, i.e. one of the
     /// points in [BooleanFunction::support].
@@ -173,9 +173,9 @@ where
 
     /// Returns `true` if the two functions are *semantically* equivalent. That is, they output
     /// the same values for the same inputs.
-    fn is_equivalent(&self, other: Self) -> bool;
+    fn is_equivalent(&self, other: &Self) -> bool;
 
     /// Returns `true` if this function is *implied* by the `other` function. That is, it outputs
     /// `1` *at least* for those inputs where `other` outputs one.
-    fn is_implied_by(&self, other: Self) -> bool;
+    fn is_implied_by(&self, other: &Self) -> bool;
 }

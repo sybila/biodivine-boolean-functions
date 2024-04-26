@@ -107,7 +107,8 @@ where
     ///
     /// ### Examples
     ///
-    /// A Boolean expression `(a | b) & c` restricted to `{ a: 0, c: 1 }` is simply `b`.
+    /// A Boolean expression `(a | b) & c` restricted to `{ a: 0, c: 1 }` is `(false | b) & true`
+    /// semantically equal to `b`.
     ///
     /// ### Implementation notes
     ///

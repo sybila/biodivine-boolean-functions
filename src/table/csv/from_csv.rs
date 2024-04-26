@@ -12,13 +12,6 @@ use crate::table::display_formatted::ALL_BOOL_STRINGS;
 use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
 
-// a;b;c;d;whatever           <-- maybe header
-// 0;1;0;1;0
-// T;T;T;F;F
-// True;True;True;False;False
-// true;true;true;false;false
-// 0;T;False;false;1
-
 impl TruthTable<String> {
     pub fn from_csv_file(
         path: impl AsRef<Path>,

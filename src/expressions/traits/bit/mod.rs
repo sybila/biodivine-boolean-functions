@@ -7,10 +7,11 @@ mod xor;
 mod tests {
     use crate::expressions::{var, Expression};
     use rstest::rstest;
+    use std::ops::{BitAnd, BitOr};
 
     #[rstest]
     fn test_op_op_ok<F, F2, F3>(
-        #[values(<Expression<String> as std::ops::BitAnd>::bitand, <Expression<String> as std::ops::BitOr>::bitor)]
+        #[values(<Expression<String> as BitAnd>::bitand, <Expression<String> as BitOr>::bitor)]
         main_op: F,
         #[values(Expression::<String>::binary_and, Expression::<String>::binary_or)] lhs_op: F2,
         #[values(Expression::<String>::binary_and, Expression::<String>::binary_or)] rhs_op: F3,
@@ -33,8 +34,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(<Expression<String> as std::ops::BitAnd>::bitand, Expression::<String>::binary_and, Expression::<String>::n_ary_and)]
-    #[case(<Expression<String> as std::ops::BitOr>::bitor, Expression::<String>::binary_or, Expression::<String>::n_ary_or)]
+    #[case(<Expression<String> as BitAnd>::bitand, Expression::<String>::binary_and, Expression::<String>::n_ary_and)]
+    #[case(<Expression<String> as BitOr>::bitor, Expression::<String>::binary_or, Expression::<String>::n_ary_or)]
     fn test_op_collapse<F, F2, F3>(#[case] main_op: F, #[case] side_op: F2, #[case] expected_op: F3)
     where
         F: Fn(Expression<String>, Expression<String>) -> Expression<String>,

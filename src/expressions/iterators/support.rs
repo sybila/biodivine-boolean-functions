@@ -31,13 +31,12 @@ impl<T: Debug + Clone + Ord> Iterator for ExpressionSupportIterator<T> {
                 return None;
             }
 
-            let boolean_point = row_index_to_bool_point(self.index, self.variables.len());
-            let valuation =
-                boolean_point_to_valuation(self.variables.clone(), boolean_point.clone())?;
-            let point_is_supporting = self.expression.evaluate(&valuation);
+            let point = row_index_to_bool_point(self.index, self.variables.len());
+            let valuation = boolean_point_to_valuation(self.variables.clone(), point.clone())?;
 
-            if point_is_supporting {
-                supporting_point = Some(boolean_point)
+            // point is supporting
+            if self.expression.evaluate(&valuation) {
+                supporting_point = Some(point)
             }
 
             self.index += 1;

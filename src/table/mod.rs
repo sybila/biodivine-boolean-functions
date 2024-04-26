@@ -22,7 +22,7 @@ where
 }
 
 impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
-    fn new(inputs: Vec<TLiteral>, outputs: Vec<bool>) -> Self {
+    pub(crate) fn new(inputs: Vec<TLiteral>, outputs: Vec<bool>) -> Self {
         Self { inputs, outputs }
     }
 

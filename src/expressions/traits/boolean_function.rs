@@ -7,6 +7,7 @@ use crate::expressions::ExpressionNode::{And, Constant, Literal, Not, Or};
 use crate::traits::{
     BooleanFunction, BooleanValuation, Evaluate, GatherLiterals, PowerSet, SemanticEq,
 };
+use crate::utils::btreeset_to_valuation;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -110,13 +111,6 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
             Constant(const_value) => Constant(*const_value).into(),
         }
     }
-}
-
-fn btreeset_to_valuation<T: Debug + Clone + Eq + Ord>(
-    set: BTreeSet<T>,
-    bool_value: bool,
-) -> BTreeMap<T, bool> {
-    BTreeMap::from_iter(set.into_iter().map(|element| (element, bool_value)))
 }
 
 #[cfg(test)]

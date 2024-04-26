@@ -42,7 +42,7 @@ impl TruthTable<String> {
             });
         }
 
-        let file_row_count = input.split('\n').count();
+        let file_row_count = input.trim().split('\n').count();
 
         Self::from_csv_common(file_row_count, Box::new(io::Cursor::new(input.to_string())))
     }
@@ -304,6 +304,7 @@ mod tests {
     #[apply(with_without_headers_template)]
     fn test_number_one_variable_ok(
         #[case] remove_headers: bool,
+        #[values(true, false)] use_from_string: bool,
     ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!("x_0,whatever\n", "0,0\n", "1,1\n");
         let file = contents_to_temp_file(if remove_headers {
@@ -312,7 +313,11 @@ mod tests {
             csv_contents
         });
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
 
         assert_eq!(table.inputs, vec!["x_0".to_string()]);
         assert_eq!(table.outputs, vec![false, true]);
@@ -323,6 +328,7 @@ mod tests {
     #[apply(with_without_headers_template)]
     fn test_number_bools_ordered_inputs_ordered_rows_ok(
         #[case] remove_headers: bool,
+        #[values(true, false)] use_from_string: bool,
     ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!(
             "x_0,x_1,whatever\n",
@@ -337,7 +343,11 @@ mod tests {
             csv_contents
         });
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
 
         assert_eq!(table.inputs, vec!["x_0".to_string(), "x_1".to_string()]);
         assert_eq!(table.outputs, vec![false, false, true, true]);
@@ -345,25 +355,38 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_number_bools_unordered_inputs_ordered_rows_ok() -> Result<(), TruthTableFromCsvError> {
+    #[rstest]
+    fn test_number_bools_unordered_inputs_ordered_rows_ok(
+        #[values(true, false)] use_from_string: bool,
+    ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!("b,a,whatever\n", "0,0,0\n", "1,0,0\n", "0,1,1\n", "1,1,1\n");
         let file = contents_to_temp_file(csv_contents);
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
+
         assert_eq!(table.inputs, vec!["a".to_string(), "b".to_string()]);
         assert_eq!(table.outputs, vec![false, false, true, true]);
 
         Ok(())
     }
 
-    #[test]
+    #[rstest]
     fn test_headerless_number_bools_unordered_inputs_ordered_rows_ok(
+        #[values(true, false)] use_from_string: bool,
     ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!("0,0,0\n", "1,0,0\n", "0,1,1\n", "1,1,1\n");
         let file = contents_to_temp_file(csv_contents);
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
+
         assert_eq!(table.inputs, vec!["x_0".to_string(), "x_1".to_string()]);
         assert_eq!(table.outputs, vec![false, true, false, true]);
 
@@ -373,6 +396,7 @@ mod tests {
     #[apply(with_without_headers_template)]
     fn test_number_bools_ordered_inputs_unordered_rows_ok(
         #[case] remove_headers: bool,
+        #[values(true, false)] use_from_string: bool,
     ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!(
             "x_0,x_1,whatever\n",
@@ -387,33 +411,50 @@ mod tests {
             csv_contents
         });
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
+
         assert_eq!(table.inputs, vec!["x_0".to_string(), "x_1".to_string()]);
         assert_eq!(table.outputs, vec![false, false, true, true]);
 
         Ok(())
     }
 
-    #[test]
-    fn test_number_bools_unordered_inputs_unordered_rows_ok() -> Result<(), TruthTableFromCsvError>
-    {
+    #[rstest]
+    fn test_number_bools_unordered_inputs_unordered_rows_ok(
+        #[values(true, false)] use_from_string: bool,
+    ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!("b,a,whatever\n", "0,0,0\n", "1,1,1\n", "0,1,1\n", "1,0,0\n");
         let file = contents_to_temp_file(csv_contents);
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
+
         assert_eq!(table.inputs, vec!["a".to_string(), "b".to_string()]);
         assert_eq!(table.outputs, vec![false, false, true, true]);
 
         Ok(())
     }
 
-    #[test]
+    #[rstest]
     fn test_headerless_number_bools_unordered_inputs_unordered_rows_ok(
+        #[values(true, false)] use_from_string: bool,
     ) -> Result<(), TruthTableFromCsvError> {
         let csv_contents = concat!("0,0,0\n", "1,1,1\n", "0,1,1\n", "1,0,0\n");
         let file = contents_to_temp_file(csv_contents);
 
-        let table = TruthTable::from_csv_file(file.path())?;
+        let table = if use_from_string {
+            TruthTable::from_csv_string(csv_contents)?
+        } else {
+            TruthTable::from_csv_file(file.path())?
+        };
+
         assert_eq!(table.inputs, vec!["x_0".to_string(), "x_1".to_string()]);
         assert_eq!(table.outputs, vec![false, true, false, true]);
 

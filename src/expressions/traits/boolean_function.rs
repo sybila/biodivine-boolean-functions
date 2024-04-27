@@ -117,7 +117,8 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
 mod tests {
     use crate::expressions::{bool, var, Expression};
     use crate::table::TruthTable;
-    use crate::traits::{BooleanFunction, Implication, SemanticEq};
+    use crate::traits::{BooleanFunction, Evaluate, Implication, SemanticEq};
+    use crate::utils::btreeset_to_valuation;
     use std::collections::{BTreeMap, BTreeSet};
 
     #[test]
@@ -297,5 +298,117 @@ mod tests {
         assert_eq!(input.degree(), 3);
         assert_eq!(actual.degree(), 2);
         assert_eq!(actual.degree(), expected.degree());
+    }
+
+    #[test]
+    fn test_existential_and_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) & var("b");
+
+        let actual = input.existential_quantification(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(!evaluated_with_true)
+    }
+
+    #[test]
+    fn test_existential_or_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) | var("b");
+
+        let actual = input.existential_quantification(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(evaluated_with_true)
+    }
+
+    #[test]
+    fn test_universal_and_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) & var("b");
+
+        let actual = input.universal_quantification(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(!evaluated_with_true)
+    }
+
+    #[test]
+    fn test_universal_or_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) | var("b");
+
+        let actual = input.universal_quantification(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(!evaluated_with_true)
+    }
+
+    #[test]
+    fn test_derivative_and_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) & var("b");
+
+        let actual = input.derivative(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(!evaluated_with_true)
+    }
+
+    #[test]
+    fn test_derivative_or_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) | var("b");
+
+        let actual = input.derivative(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(evaluated_with_true)
+    }
+
+    #[test]
+    fn test_derivative_xor_ok() {
+        let target = "a".to_string();
+        let set = BTreeSet::from([target.clone()]);
+        let input = var(target.clone()) ^ var("b");
+
+        let actual = input.derivative(set.clone());
+        assert!(!actual.inputs().contains(&target.clone()));
+
+        let evaluated_with_true = actual.evaluate(&btreeset_to_valuation(set.clone(), true));
+        let evaluated_with_false = actual.evaluate(&btreeset_to_valuation(set, false));
+
+        assert_eq!(evaluated_with_true, evaluated_with_false);
+        assert!(evaluated_with_true)
     }
 }

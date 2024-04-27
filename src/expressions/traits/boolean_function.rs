@@ -156,22 +156,24 @@ mod tests {
     #[test]
     fn test_essential_inputs_some_inputs_ok() {
         // the boolean function doesn't depend on Z, but does on X and Y
-        let input = TruthTable::from_csv_string(concat!(
-            "x,y,z,output\n",
-            "0,0,1,1\n",
-            "0,0,0,1\n",
-            "0,1,1,0\n",
-            "0,1,0,0\n",
-            "1,0,1,0\n",
-            "1,0,0,0\n",
-            "1,1,1,0\n",
-            "1,1,0,0\n",
-        ))
-        .unwrap()
+        // "x,y,z,output\n",
+        // "0,0,1,1\n",
+        // "0,0,0,1\n",
+        // "0,1,1,0\n",
+        // "0,1,0,0\n",
+        // "1,0,1,0\n",
+        // "1,0,0,0\n",
+        // "1,1,1,0\n",
+        // "1,1,0,0\n",
+
+        let input = TruthTable::new(
+            vec!["x", "y", "z"],
+            vec![false, false, true, true, true, true, true, true],
+        )
         .to_expression_trivial();
 
         let actual = input.essential_inputs();
-        let expected = BTreeSet::from_iter(["x".to_string(), "y".to_string()]);
+        let expected = BTreeSet::from_iter(["x", "y"]);
 
         assert_eq!(actual, expected);
     }

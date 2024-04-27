@@ -413,6 +413,18 @@ mod tests {
     }
 
     #[test]
+    fn test_semantic_eq_ok() {
+        let input =
+            !(var("d") & var("b")) | !(var("a") & var("b")) & var("a") | (bool(true) & var("d"));
+
+        let nnf = input.to_nnf();
+        assert!(input.is_equivalent(&nnf));
+
+        let cnf = input.to_cnf();
+        assert!(input.is_equivalent(&cnf));
+    }
+
+    #[test]
     fn test_is_implied_by_unit_ok() {
         assert!(bool(false).is_implied_by(&bool(false)));
         assert!(bool(true).is_implied_by(&bool(false)));

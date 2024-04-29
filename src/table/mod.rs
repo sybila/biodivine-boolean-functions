@@ -15,13 +15,13 @@ mod utils;
 #[derive(Debug, PartialEq, Eq)]
 pub struct TruthTable<TLiteral>
 where
-    TLiteral: Debug + Display + Clone + Eq + Ord,
+    TLiteral: Debug + Clone + Eq + Ord,
 {
     inputs: Vec<TLiteral>,
     outputs: Vec<bool>,
 }
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> TruthTable<TLiteral> {
     pub(crate) fn new(inputs: Vec<TLiteral>, outputs: Vec<bool>) -> Self {
         Self { inputs, outputs }
     }
@@ -105,7 +105,9 @@ impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
     pub fn row(&self, row_index: usize) -> Vec<bool> {
         row_index_to_bool_point(row_index, self.variable_count())
     }
+}
 
+impl<TLiteral: Debug + Display + Clone + Eq + Ord> TruthTable<TLiteral> {
     fn header_row_iterator(&self) -> impl Iterator<Item = String> + '_ {
         self.inputs
             .iter()

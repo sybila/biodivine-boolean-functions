@@ -1,21 +1,17 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 use crate::expressions::Expression;
 use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
 use crate::traits::{Evaluate, GatherLiterals, PowerSet};
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord> From<Expression<TLiteral>>
-    for TruthTable<TLiteral>
-{
+impl<TLiteral: Debug + Clone + Eq + Ord> From<Expression<TLiteral>> for TruthTable<TLiteral> {
     fn from(expression: Expression<TLiteral>) -> Self {
         Self::from(&expression)
     }
 }
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord> From<&Expression<TLiteral>>
-    for TruthTable<TLiteral>
-{
+impl<TLiteral: Debug + Clone + Eq + Ord> From<&Expression<TLiteral>> for TruthTable<TLiteral> {
     fn from(expression: &Expression<TLiteral>) -> Self {
         let literals = expression.gather_literals();
         let all_options = expression.generate_power_set();

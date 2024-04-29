@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 use crate::table::utils::{values_to_row_index_checked, values_to_row_index_with_default};
 use crate::table::TruthTable;
 use crate::traits::Evaluate;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord> Evaluate<TLiteral> for TruthTable<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> Evaluate<TLiteral> for TruthTable<TLiteral> {
     fn evaluate_with_default(
         &self,
         literal_values: &BTreeMap<TLiteral, bool>,

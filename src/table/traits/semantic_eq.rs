@@ -1,9 +1,9 @@
 use crate::table::TruthTable;
 use crate::traits::{Evaluate, GatherLiterals, PowerSet, SemanticEq};
 use std::collections::BTreeSet;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
-impl<TLiteral: Debug + Display + Clone + Eq + Ord> SemanticEq<TLiteral> for TruthTable<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> SemanticEq<TLiteral> for TruthTable<TLiteral> {
     fn semantic_eq(&self, other: &Self) -> bool {
         let inputs_from_both = BTreeSet::from_iter(
             self.gather_literals()

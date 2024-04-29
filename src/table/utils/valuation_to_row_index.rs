@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 // Any errors are ignored
 pub fn values_to_row_index<TLiteral: Debug + Clone + Eq + Ord>(
@@ -19,7 +19,7 @@ pub fn values_to_row_index_with_default<TLiteral: Debug + Clone + Eq + Ord>(
     index
 }
 
-pub fn values_to_row_index_checked<TLiteral: Debug + Display + Clone + Eq + Ord>(
+pub fn values_to_row_index_checked<TLiteral: Debug + Clone + Eq + Ord>(
     order: &[TLiteral],
     valuation: &BTreeMap<TLiteral, bool>,
 ) -> Result<usize, Vec<TLiteral>> {

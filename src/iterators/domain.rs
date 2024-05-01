@@ -1,4 +1,3 @@
-use crate::expressions::Expression;
 use crate::traits::GatherLiterals;
 use crate::utils::row_index_to_bool_point;
 use std::fmt::Debug;
@@ -14,12 +13,6 @@ impl DomainIterator {
             variable_count: value.gather_literals().len(),
             index: 0,
         }
-    }
-}
-
-impl<T: Debug + Clone + Ord> From<&Expression<T>> for DomainIterator {
-    fn from(value: &Expression<T>) -> Self {
-        Self::new(value)
     }
 }
 

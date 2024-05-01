@@ -1,16 +1,15 @@
 use crate::expressions::Expression;
-use crate::traits::{BooleanPoint, GatherLiterals};
-use crate::utils::{boolean_point_to_valuation, row_index_to_bool_point};
-use std::collections::BTreeMap;
+use crate::traits::GatherLiterals;
+use crate::utils::row_index_to_bool_point;
 use std::fmt::Debug;
 
-pub struct ExpressionDomainIterator {
+pub struct DomainIterator {
     variable_count: usize,
     index: usize,
 }
 
-impl<T: Debug + Clone + Ord> From<&Expression<T>> for ExpressionDomainIterator {
-    fn from(value: &Expression<T>) -> Self {
+impl DomainIterator {
+    pub(crate) fn new<T: Debug + Clone + Ord>(value: &impl GatherLiterals<T>) -> Self {
         Self {
             variable_count: value.gather_literals().len(),
             index: 0,
@@ -18,7 +17,13 @@ impl<T: Debug + Clone + Ord> From<&Expression<T>> for ExpressionDomainIterator {
     }
 }
 
-impl Iterator for ExpressionDomainIterator {
+impl<T: Debug + Clone + Ord> From<&Expression<T>> for DomainIterator {
+    fn from(value: &Expression<T>) -> Self {
+        Self::new(value)
+    }
+}
+
+impl Iterator for DomainIterator {
     type Item = Vec<bool>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -30,12 +35,6 @@ impl Iterator for ExpressionDomainIterator {
         self.index += 1;
 
         Some(result)
-    }
-}
-
-impl<T: Debug + Clone + Eq + Ord> Expression<T> {
-    pub fn boolean_point_to_valuation(&self, point: BooleanPoint) -> Option<BTreeMap<T, bool>> {
-        boolean_point_to_valuation(self.gather_literals(), point)
     }
 }
 

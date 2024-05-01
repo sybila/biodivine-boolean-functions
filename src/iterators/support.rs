@@ -1,4 +1,3 @@
-use crate::expressions::Expression;
 use crate::traits::{BooleanPoint, Evaluate, GatherLiterals};
 use crate::utils::{boolean_point_to_valuation, row_index_to_bool_point};
 use std::collections::BTreeSet;
@@ -17,12 +16,6 @@ impl<T: Debug + Clone + Ord> SupportIterator<T> {
             evaluatable: Box::from(value.clone()),
             index: 0,
         }
-    }
-}
-
-impl<T: Debug + Clone + Ord + 'static> From<&Expression<T>> for SupportIterator<T> {
-    fn from(value: &Expression<T>) -> Self {
-        Self::new(value)
     }
 }
 

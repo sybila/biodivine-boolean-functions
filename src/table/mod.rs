@@ -9,10 +9,11 @@ use crate::utils::row_index_to_bool_point;
 #[cfg(feature = "csv")]
 pub mod csv;
 pub mod display_formatted;
+mod iterators;
 pub mod traits;
 mod utils;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TruthTable<TLiteral>
 where
     TLiteral: Debug + Clone + Eq + Ord,

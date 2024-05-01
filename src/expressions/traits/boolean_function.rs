@@ -1,9 +1,6 @@
-use crate::expressions::iterators::{
-    ExpressionDomainIterator, ExpressionImageIterator, ExpressionRelationIterator,
-    ExpressionSupportIterator,
-};
 use crate::expressions::Expression;
 use crate::expressions::ExpressionNode::{And, Constant, Literal, Not, Or};
+use crate::iterators::{DomainIterator, ImageIterator, RelationIterator, SupportIterator};
 use crate::traits::{
     BooleanFunction, BooleanValuation, Evaluate, GatherLiterals, PowerSet, SemanticEq,
 };
@@ -11,11 +8,11 @@ use crate::utils::btreeset_to_valuation;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
-impl<T: Debug + Clone + Ord> BooleanFunction<T> for Expression<T> {
-    type DomainIterator = ExpressionDomainIterator;
-    type RangeIterator = ExpressionImageIterator<T>;
-    type RelationIterator = ExpressionRelationIterator<T>;
-    type SupportIterator = ExpressionSupportIterator<T>;
+impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for Expression<T> {
+    type DomainIterator = DomainIterator;
+    type RangeIterator = ImageIterator<T>;
+    type RelationIterator = RelationIterator<T>;
+    type SupportIterator = SupportIterator<T>;
 
     fn inputs(&self) -> BTreeSet<T> {
         self.gather_literals()

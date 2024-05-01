@@ -4,23 +4,29 @@ use crate::utils::{boolean_point_to_valuation, row_index_to_bool_point};
 use std::collections::BTreeSet;
 use std::fmt::Debug;
 
-pub struct ExpressionSupportIterator<T: Debug + Clone + Ord> {
+pub struct SupportIterator<T: Debug + Clone + Ord> {
     variables: BTreeSet<T>,
-    expression: Expression<T>,
+    evaluatable: Box<dyn Evaluate<T>>,
     index: usize,
 }
 
-impl<T: Debug + Clone + Ord> From<&Expression<T>> for ExpressionSupportIterator<T> {
-    fn from(value: &Expression<T>) -> Self {
+impl<T: Debug + Clone + Ord> SupportIterator<T> {
+    pub(crate) fn new(value: &(impl Evaluate<T> + GatherLiterals<T> + Clone + 'static)) -> Self {
         Self {
             variables: value.gather_literals(),
-            expression: value.clone(),
+            evaluatable: Box::from(value.clone()),
             index: 0,
         }
     }
 }
 
-impl<T: Debug + Clone + Ord> Iterator for ExpressionSupportIterator<T> {
+impl<T: Debug + Clone + Ord + 'static> From<&Expression<T>> for SupportIterator<T> {
+    fn from(value: &Expression<T>) -> Self {
+        Self::new(value)
+    }
+}
+
+impl<T: Debug + Clone + Ord> Iterator for SupportIterator<T> {
     type Item = BooleanPoint;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -35,7 +41,7 @@ impl<T: Debug + Clone + Ord> Iterator for ExpressionSupportIterator<T> {
             let valuation = boolean_point_to_valuation(self.variables.clone(), point.clone())?;
 
             // point is supporting
-            if self.expression.evaluate(&valuation) {
+            if self.evaluatable.evaluate(&valuation) {
                 supporting_point = Some(point)
             }
 

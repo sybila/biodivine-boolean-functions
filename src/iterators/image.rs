@@ -4,23 +4,29 @@ use crate::utils::{boolean_point_to_valuation, row_index_to_bool_point};
 use std::collections::BTreeSet;
 use std::fmt::Debug;
 
-pub struct ExpressionImageIterator<T: Debug + Clone + Ord> {
+pub struct ImageIterator<T: Debug + Clone + Ord> {
     variables: BTreeSet<T>,
-    expression: Expression<T>,
+    evaluatable: Box<dyn Evaluate<T>>,
     index: usize,
 }
 
-impl<T: Debug + Clone + Ord> From<&Expression<T>> for ExpressionImageIterator<T> {
-    fn from(value: &Expression<T>) -> Self {
+impl<T: Debug + Clone + Ord> ImageIterator<T> {
+    pub(crate) fn new(value: &(impl Evaluate<T> + GatherLiterals<T> + Clone + 'static)) -> Self {
         Self {
             variables: value.gather_literals(),
-            expression: value.clone(),
+            evaluatable: Box::from(value.clone()),
             index: 0,
         }
     }
 }
 
-impl<T: Debug + Clone + Ord> Iterator for ExpressionImageIterator<T> {
+impl<T: Debug + Clone + Ord + 'static> From<&Expression<T>> for ImageIterator<T> {
+    fn from(value: &Expression<T>) -> Self {
+        Self::new(value)
+    }
+}
+
+impl<T: Debug + Clone + Ord> Iterator for ImageIterator<T> {
     type Item = bool;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -30,7 +36,7 @@ impl<T: Debug + Clone + Ord> Iterator for ExpressionImageIterator<T> {
 
         let boolean_point = row_index_to_bool_point(self.index, self.variables.len());
         let valuation = boolean_point_to_valuation(self.variables.clone(), boolean_point)?;
-        let result = self.expression.evaluate(&valuation);
+        let result = self.evaluatable.evaluate(&valuation);
 
         self.index += 1;
 

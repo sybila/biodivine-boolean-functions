@@ -64,26 +64,16 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
             .map(|output| (false, output))
             .collect::<Vec<_>>();
 
-        #[allow(clippy::needless_bool)]
         for (input_index, input) in self.inputs.iter().rev().enumerate() {
             if let Some(target_variable_should_be_1) = valuation.get(input) {
                 (0..self.row_count())
                     .filter(|row_index| {
                         let target_variable_is_one =
                             row_index & (1 << input_index) == (1 << input_index);
-                        let keep_this_row = if (*target_variable_should_be_1
-                            && !target_variable_is_one)
-                            || (!*target_variable_should_be_1 && target_variable_is_one)
-                        {
-                            false
-                        } else {
-                            true
-                        };
-
-                        keep_this_row
+                        (*target_variable_should_be_1 && target_variable_is_one)
+                            || (!*target_variable_should_be_1 && !target_variable_is_one)
                     })
                     .for_each(|row_index| {
-                        println!("kept {row_index} after filtering");
                         outputs_kept[row_index].0 = true;
                     });
             }
@@ -93,9 +83,6 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
             inputs_kept,
             outputs_kept
                 .into_iter()
-                .inspect(|(should_be_kept, output)| {
-                    println!("before filter_map: output {output} should be kept {should_be_kept}")
-                })
                 .filter_map(|(should_be_kept, output)| should_be_kept.then_some(output))
                 .collect(),
         )

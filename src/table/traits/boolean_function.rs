@@ -50,8 +50,55 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
         self.into()
     }
 
-    fn restrict(&self, _valuation: &BooleanValuation<T>) -> Self {
-        todo!()
+    fn restrict(&self, valuation: &BooleanValuation<T>) -> Self {
+        let inputs_kept = {
+            let mut inputs_kept = self.inputs.clone();
+            inputs_kept.retain(|input| !valuation.contains_key(input));
+            inputs_kept
+        };
+
+        let mut outputs_kept = self
+            .outputs
+            .clone()
+            .into_iter()
+            .map(|output| (false, output))
+            .collect::<Vec<_>>();
+
+        #[allow(clippy::needless_bool)]
+        for (input_index, input) in self.inputs.iter().rev().enumerate() {
+            if let Some(target_variable_should_be_1) = valuation.get(input) {
+                (0..self.row_count())
+                    .filter(|row_index| {
+                        let target_variable_is_one =
+                            row_index & (1 << input_index) == (1 << input_index);
+                        let keep_this_row = if (*target_variable_should_be_1
+                            && !target_variable_is_one)
+                            || (!*target_variable_should_be_1 && target_variable_is_one)
+                        {
+                            false
+                        } else {
+                            true
+                        };
+
+                        keep_this_row
+                    })
+                    .for_each(|row_index| {
+                        println!("kept {row_index} after filtering");
+                        outputs_kept[row_index].0 = true;
+                    });
+            }
+        }
+
+        TruthTable::new(
+            inputs_kept,
+            outputs_kept
+                .into_iter()
+                .inspect(|(should_be_kept, output)| {
+                    println!("before filter_map: output {output} should be kept {should_be_kept}")
+                })
+                .filter_map(|(should_be_kept, output)| should_be_kept.then_some(output))
+                .collect(),
+        )
     }
 
     fn substitute(&self, _mapping: &BTreeMap<T, Self>) -> Self {
@@ -127,6 +174,90 @@ mod tests {
 
         let actual = input.essential_inputs();
         let expected = BTreeSet::from_iter(["x", "y"]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_restrict_1st() {
+        // "x,y,z,output\n",
+        // "0,0,0,0\n",
+        // "0,0,1,1\n",
+        // "0,1,0,0\n",
+        // "0,1,1,0\n",
+        // "1,0,0,1\n", x
+        // "1,0,1,0\n", x
+        // "1,1,0,0\n", x
+        // "1,1,1,0\n", x
+
+        let input = TruthTable::new(
+            vec!["x", "y", "z"],
+            vec![false, true, false, false, true, false, false, false],
+        );
+
+        let actual = input.restrict(&BTreeMap::from([("x", true)]));
+        let expected = TruthTable::new(vec!["y", "z"], vec![true, false, false, false]);
+
+        assert_eq!(actual, expected);
+
+        let actual = input.restrict(&BTreeMap::from([("x", false)]));
+        let expected = TruthTable::new(vec!["y", "z"], vec![false, true, false, false]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_restrict_2nd() {
+        // "x,y,z,output\n",
+        // "0,0,0,0\n",
+        // "0,0,1,1\n",
+        // "0,1,0,0\n", x
+        // "0,1,1,0\n", x
+        // "1,0,0,1\n",
+        // "1,0,1,0\n",
+        // "1,1,0,0\n", x
+        // "1,1,1,0\n", x
+
+        let input = TruthTable::new(
+            vec!["x", "y", "z"],
+            vec![false, true, false, false, true, false, false, false],
+        );
+
+        let actual = input.restrict(&BTreeMap::from([("y", true)]));
+        let expected = TruthTable::new(vec!["x", "z"], vec![false, false, false, false]);
+
+        assert_eq!(actual, expected);
+
+        let actual = input.restrict(&BTreeMap::from([("y", false)]));
+        let expected = TruthTable::new(vec!["x", "z"], vec![false, true, true, false]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_restrict_3rd() {
+        // "x,y,z,output\n",
+        // "0,0,0,0\n",
+        // "0,0,1,1\n", x
+        // "0,1,0,0\n",
+        // "0,1,1,0\n", x
+        // "1,0,0,1\n",
+        // "1,0,1,0\n", x
+        // "1,1,0,0\n",
+        // "1,1,1,0\n", x
+
+        let input = TruthTable::new(
+            vec!["x", "y", "z"],
+            vec![false, true, false, false, true, false, false, false],
+        );
+
+        let actual = input.restrict(&BTreeMap::from([("z", true)]));
+        let expected = TruthTable::new(vec!["x", "y"], vec![true, false, false, false]);
+
+        assert_eq!(actual, expected);
+
+        let actual = input.restrict(&BTreeMap::from([("z", false)]));
+        let expected = TruthTable::new(vec!["x", "y"], vec![false, false, true, false]);
 
         assert_eq!(actual, expected);
     }

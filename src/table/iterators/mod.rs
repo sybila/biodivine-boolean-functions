@@ -4,6 +4,10 @@ use crate::utils::boolean_point_to_valuation;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 
+pub use image::ImageIterator;
+pub use relation::RelationIterator;
+pub use support::SupportIterator;
+
 mod domain;
 mod image;
 mod relation;

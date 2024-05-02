@@ -1,4 +1,5 @@
-use crate::iterators::{DomainIterator, ImageIterator, RelationIterator, SupportIterator};
+use crate::iterators::DomainIterator;
+use crate::table::iterators::{ImageIterator, RelationIterator, SupportIterator};
 use crate::table::TruthTable;
 use crate::traits::{BooleanFunction, BooleanValuation, GatherLiterals};
 use std::collections::{BTreeMap, BTreeSet};
@@ -6,9 +7,9 @@ use std::fmt::Debug;
 
 impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
     type DomainIterator = DomainIterator;
-    type RangeIterator = ImageIterator<T>;
-    type RelationIterator = RelationIterator<T>;
-    type SupportIterator = SupportIterator<T>;
+    type RangeIterator = ImageIterator;
+    type RelationIterator = RelationIterator;
+    type SupportIterator = SupportIterator;
 
     fn inputs(&self) -> BTreeSet<T> {
         self.gather_literals()

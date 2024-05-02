@@ -1,7 +1,6 @@
 use crate::iterators::{DomainIterator, ImageIterator, RelationIterator, SupportIterator};
 use crate::table::TruthTable;
 use crate::traits::{BooleanFunction, BooleanValuation, GatherLiterals};
-use itertools::Itertools;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -22,25 +21,14 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
                 .rev()
                 .enumerate()
                 .filter_map(|(var_index, input)| {
-                    let variable_exponent = 2usize.pow(var_index as u32);
-
                     let outputs_differ = (0..self.row_count())
-                        .chunks(variable_exponent)
-                        .into_iter()
-                        .enumerate()
-                        .filter(|(chunk_index, _row_indexes)| *chunk_index % 2 == 0)
-                        .any(|(_chunk_index, mut row_indexes)| {
-                            row_indexes.any(|row_index| {
-                                self.outputs[row_index]
-                                    != self.outputs[row_index + variable_exponent]
-                            })
+                        .filter(|row_index| row_index & (1 << var_index) == 0)
+                        .map(|row_index| (row_index, row_index ^ (1 << var_index)))
+                        .any(|(row_index, flipped_row_index)| {
+                            self.outputs[row_index] != self.outputs[flipped_row_index]
                         });
 
-                    if outputs_differ {
-                        Some(input)
-                    } else {
-                        None
-                    }
+                    outputs_differ.then_some(input)
                 });
 
         BTreeSet::from_iter(essentials)

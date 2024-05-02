@@ -177,6 +177,16 @@ mod tests {
     }
 
     #[test]
+    fn test_essential_inputs_xor_all_inputs_ok() {
+        let input = var("a") ^ var("b");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_restrict_ok() {
         let input = (var("a") | var("b")) & var("c");
         let valuation = BTreeMap::from_iter([("a".to_string(), false), ("c".to_string(), true)]);

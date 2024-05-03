@@ -14,6 +14,13 @@ impl DomainIterator {
             index: 0,
         }
     }
+
+    pub(crate) fn from_count(count: usize) -> Self {
+        Self {
+            variable_count: count,
+            index: 0,
+        }
+    }
 }
 
 impl Iterator for DomainIterator {

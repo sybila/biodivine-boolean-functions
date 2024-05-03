@@ -1,3 +1,4 @@
+pub mod bit;
 mod boolean_function;
 pub mod display;
 pub mod evaluate;

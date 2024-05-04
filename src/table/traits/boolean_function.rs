@@ -1,8 +1,11 @@
 use crate::iterators::DomainIterator;
 use crate::table::iterators::{ImageIterator, RelationIterator, SupportIterator};
+use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
-use crate::traits::{BooleanFunction, BooleanValuation, GatherLiterals};
-use crate::utils::btreeset_to_valuation;
+use crate::traits::{
+    BooleanFunction, BooleanValuation, Evaluate, GatherLiterals, PowerSet, SemanticEq,
+};
+use crate::utils::{boolean_point_to_valuation, btreeset_to_valuation};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
@@ -90,8 +93,40 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
         )
     }
 
-    fn substitute(&self, _mapping: &BTreeMap<T, Self>) -> Self {
-        todo!()
+    fn substitute(&self, mapping: &BTreeMap<T, Self>) -> Self {
+        let substituted_inputs = BTreeSet::from_iter(mapping.keys().cloned());
+        let substituting_inputs =
+            BTreeSet::from_iter(mapping.values().flat_map(|value| value.gather_literals()));
+        let final_inputs = &(&self.gather_literals() - &substituted_inputs) | &substituting_inputs;
+
+        let mut outputs = vec![];
+
+        for original_point in DomainIterator::from_count(final_inputs.len()) {
+            let mut final_point = original_point.clone();
+            let original_valuation =
+                boolean_point_to_valuation(final_inputs.clone(), original_point.clone()).expect(
+                    "Point should be from domain of the same dimension as the number of inputs",
+                );
+
+            // alter current valuation based on mappings
+            for (index, (_bool, variable)) in
+                original_point.into_iter().zip(&final_inputs).enumerate()
+            {
+                if let Some(substitution_table) = mapping.get(variable) {
+                    let output = substitution_table.evaluate(&original_valuation);
+                    final_point[index] = output;
+                }
+            }
+
+            let final_valuation = boolean_point_to_valuation(final_inputs.clone(), final_point)
+                .expect(
+                    "Point should be from domain of the same dimension as the number of inputs",
+                );
+            let final_index = values_to_row_index(&self.inputs, &final_valuation);
+            outputs.push(self.outputs[final_index])
+        }
+
+        TruthTable::new(Vec::from_iter(final_inputs), outputs)
     }
 
     fn existential_quantification(&self, variables: BTreeSet<T>) -> Self {
@@ -109,19 +144,27 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
             ^ self.restrict(&btreeset_to_valuation(variables, true))
     }
 
-    fn is_equivalent(&self, _other: &Self) -> bool {
-        todo!()
+    fn is_equivalent(&self, other: &Self) -> bool {
+        self.semantic_eq(other)
     }
 
-    fn is_implied_by(&self, _other: &Self) -> bool {
-        todo!()
+    fn is_implied_by(&self, other: &Self) -> bool {
+        let self_literals = self.gather_literals();
+        let other_literals = other.gather_literals();
+        let literals_union = BTreeSet::from_iter(self_literals.union(&other_literals).cloned());
+
+        let all_options = Self::generate_arbitrary_power_set(literals_union);
+
+        all_options
+            .into_iter()
+            .all(|valuation| !other.evaluate(&valuation) | self.evaluate(&valuation))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expressions::var;
+    use crate::expressions::{bool, var, Expression};
     use crate::traits::{Evaluate, Implication};
 
     #[test]
@@ -252,6 +295,87 @@ mod tests {
         let expected = TruthTable::new(vec!["x", "y"], vec![false, false, true, false]);
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_substitute_no_variables() {
+        let input = TruthTable::from((var("a") | var("b")) & var("c"));
+        let valuation = BTreeMap::new();
+
+        let expected = input.clone();
+        let actual = input.substitute(&valuation);
+
+        assert_eq!(expected, actual);
+        assert!(expected.semantic_eq(&actual));
+        assert_eq!(actual.degree(), expected.degree());
+    }
+
+    #[test]
+    fn test_substitute_variables_same_ok() {
+        let input = TruthTable::from((var("a") | var("b")) & var("c") & !var("a") & bool(true));
+        let mapping =
+            BTreeMap::from_iter([("a".to_string(), TruthTable::from(var("a") | !var("b")))]);
+
+        // cannot use `var("a") | !var("b") | var("b")` for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        let expected = TruthTable::from(
+            Expression::n_ary_or(&[var("a") | !var("b"), var("b")])
+                & var("c")
+                & !(var("a") | !var("b"))
+                & bool(true),
+        );
+        let actual = input.substitute(&mapping);
+
+        assert!(expected.semantic_eq(&actual));
+        assert_eq!(expected, actual);
+        assert_eq!(actual.degree(), expected.degree());
+    }
+
+    #[test]
+    fn test_substitute_variables_added_ok() {
+        let input = TruthTable::from((var("a") | var("b")) & var("c") & !var("a") & bool(true));
+
+        let new_value = TruthTable::from(var("ddd") & (bool(false) | var("a")));
+        let mapping = BTreeMap::from_iter([("a".to_string(), new_value.clone())]);
+
+        // cannot use bitwise operators for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        let expected = TruthTable::from(
+            Expression::n_ary_or(&[var("ddd") & (bool(false) | var("a")), var("b")])
+                & var("c")
+                & !(var("ddd") & (bool(false) | var("a")))
+                & bool(true),
+        );
+        let actual = input.substitute(&mapping);
+
+        assert!(expected.semantic_eq(&actual));
+        assert_eq!(expected, actual);
+
+        assert_eq!(input.degree(), 3);
+        assert_eq!(actual.degree(), 4);
+        assert_eq!(actual.degree(), expected.degree());
+    }
+
+    #[test]
+    fn test_substitute_variables_removed_ok() {
+        let input = TruthTable::from((var("a") | var("b")) & var("c") & !var("a") & bool(true));
+
+        let new_value = bool(false);
+        let mapping = BTreeMap::from_iter([("a".to_string(), TruthTable::from(new_value))]);
+
+        // cannot use bitwise operators for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        let expected = TruthTable::from(
+            Expression::n_ary_or(&[bool(false), var("b")]) & var("c") & !bool(false) & bool(true),
+        );
+        let actual = input.substitute(&mapping);
+
+        assert!(expected.semantic_eq(&actual));
+        // assert_eq!(expected, actual);
+
+        assert_eq!(input.degree(), 3);
+        assert_eq!(actual.degree(), 2);
+        assert_eq!(actual.degree(), expected.degree());
     }
 
     #[test]

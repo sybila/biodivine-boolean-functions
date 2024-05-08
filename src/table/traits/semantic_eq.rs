@@ -22,13 +22,14 @@ impl<TLiteral: Debug + Clone + Eq + Ord> SemanticEq<TLiteral> for TruthTable<TLi
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::traits::BooleanFunction;
 
     #[test]
     fn test_semantic_eq_same_variables_ok_equal() {
         let input_1 = TruthTable::new(vec!["a", "b"], vec![true, false, true, false]);
         let input_2 = TruthTable::new(vec!["a", "b"], vec![true, false, true, false]);
 
-        assert!(input_1.semantic_eq(&input_2));
+        assert!(input_1.is_equivalent(&input_2));
     }
 
     #[test]
@@ -36,7 +37,7 @@ mod tests {
         let input_1 = TruthTable::new(vec!["a", "b"], vec![true, false, true, false]);
         let input_2 = TruthTable::new(vec!["a", "b"], vec![true, true, true, false]);
 
-        assert!(!input_1.semantic_eq(&input_2));
+        assert!(!input_1.is_equivalent(&input_2));
     }
 
     #[test]
@@ -48,7 +49,7 @@ mod tests {
             vec![true, true, false, false, true, true, false, false],
         );
 
-        assert!(input_1.semantic_eq(&input_2));
+        assert!(input_1.is_equivalent(&input_2));
     }
 
     #[test]
@@ -56,6 +57,6 @@ mod tests {
         let input_1 = TruthTable::new(vec!["a", "b"], vec![true, false, true, false]);
         let input_2 = TruthTable::new(vec!["a", "c"], vec![true, false, true, false]);
 
-        assert!(!input_1.semantic_eq(&input_2));
+        assert!(!input_1.is_equivalent(&input_2));
     }
 }

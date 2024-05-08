@@ -489,4 +489,12 @@ mod tests {
         assert_eq!(evaluated_with_true, evaluated_with_false);
         assert!(evaluated_with_true)
     }
+
+    #[test]
+    fn test_is_implied_by_unit_ok() {
+        assert!(TruthTable::from(bool(false)).is_implied_by(&TruthTable::from(bool(false))));
+        assert!(TruthTable::from(bool(true)).is_implied_by(&TruthTable::from(bool(false))));
+        assert!(!TruthTable::from(bool(false)).is_implied_by(&TruthTable::from(bool(true))));
+        assert!(TruthTable::from(bool(true)).is_implied_by(&TruthTable::from(bool(true))));
+    }
 }

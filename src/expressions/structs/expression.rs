@@ -100,7 +100,7 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
             Or(es) => es
                 .iter()
                 .map(|e| e.to_cnf())
-                .reduce(|acc, e| Expression::distribute(&acc, &e))
+                .reduce(|acc, e| Expression::distribute_cnf(&acc, &e))
                 .unwrap(),
             And(es) => And(es.iter().map(|e| e.to_cnf()).collect()).into(),
             _other => nnf,
@@ -113,19 +113,19 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
     // | phi1, FAnd_wi and1 and2 → FAnd_wi (distr phi1 and1) (distr phi1 and2)
     // | phi1,phi2 → FOr_wi phi1 phi2
     // end
-    fn distribute(first: &Self, second: &Self) -> Self {
+    fn distribute_cnf(first: &Self, second: &Self) -> Self {
         match (first.node(), second.node()) {
             (And(es), _) => {
                 let es = es
                     .iter()
-                    .map(|e| Expression::distribute(e, second))
+                    .map(|e| Expression::distribute_cnf(e, second))
                     .collect();
                 And(es).into()
             }
             (_, And(es)) => {
                 let es = es
                     .iter()
-                    .map(|e| Expression::distribute(first, e))
+                    .map(|e| Expression::distribute_cnf(first, e))
                     .collect();
                 And(es).into()
             }
@@ -218,7 +218,7 @@ pub mod tests {
         let input_right = var("b") & var("c");
 
         let expected = (var("a") | var("b")) & (var("a") | var("c"));
-        let actual = Expression::distribute(&input_left, &input_right);
+        let actual = Expression::distribute_cnf(&input_left, &input_right);
 
         assert!(expected.semantic_eq(&actual));
     }
@@ -229,7 +229,7 @@ pub mod tests {
         let input_right = var("a");
 
         let expected = (var("b") | var("a")) & (var("c") | var("a"));
-        let actual = Expression::distribute(&input_left, &input_right);
+        let actual = Expression::distribute_cnf(&input_left, &input_right);
 
         assert!(expected.semantic_eq(&actual));
     }

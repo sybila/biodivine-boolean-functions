@@ -1,3 +1,4 @@
+pub mod bdd;
 #[cfg(feature = "python")]
 mod bindings;
 pub mod expressions;

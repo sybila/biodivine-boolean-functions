@@ -107,12 +107,6 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
         }
     }
 
-    // let rec distr (phi1 phi2: formula_wi) : formula_wi
-    // = match phi1, phi2 with
-    // | FAnd_wi and1 and2, phi2 → FAnd_wi (distr and1 phi2) (distr and2 phi2)
-    // | phi1, FAnd_wi and1 and2 → FAnd_wi (distr phi1 and1) (distr phi1 and2)
-    // | phi1,phi2 → FOr_wi phi1 phi2
-    // end
     fn distribute_cnf(first: &Self, second: &Self) -> Self {
         match (first.node(), second.node()) {
             (And(es), _) => {
@@ -140,6 +134,50 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
             Not(inner) => matches!(inner.node(), Literal(_)),
             And(es) => es.iter().all(|e| e.is_cnf()),
             Or(es) => !es.iter().any(|e| e.is_and()) && es.iter().all(|e| e.is_cnf()),
+        }
+    }
+
+    pub fn to_dnf(&self) -> Self {
+        let nnf = self.to_nnf();
+
+        match nnf.node() {
+            And(es) => es
+                .iter()
+                .map(|e| e.to_dnf())
+                .reduce(|acc, e| Expression::distribute_dnf(&acc, &e))
+                .unwrap(),
+            Or(es) => Or(es.iter().map(|e| e.to_dnf()).collect()).into(),
+            _other => nnf,
+        }
+    }
+
+    fn distribute_dnf(first: &Self, second: &Self) -> Self {
+        match (first.node(), second.node()) {
+            (Or(es), _) => {
+                let es = es
+                    .iter()
+                    .map(|e| Expression::distribute_dnf(e, second))
+                    .collect();
+                Or(es).into()
+            }
+            (_, Or(es)) => {
+                let es = es
+                    .iter()
+                    .map(|e| Expression::distribute_dnf(first, e))
+                    .collect();
+                Or(es).into()
+            }
+            (_e1, _e2) => Expression::binary_and(first, second),
+        }
+    }
+
+    pub fn is_dnf(&self) -> bool {
+        match self.node() {
+            Literal(_) => true,
+            Constant(_) => false,
+            Not(inner) => matches!(inner.node(), Literal(_)),
+            Or(es) => es.iter().all(|e| e.is_dnf()),
+            And(es) => !es.iter().any(|e| e.is_or()) && es.iter().all(|e| e.is_dnf()),
         }
     }
 
@@ -270,6 +308,35 @@ pub mod tests {
 
         assert!(expected.semantic_eq(&actual));
         assert!(actual.is_cnf());
+    }
+
+    #[test]
+    fn to_dnf_basic() {
+        let input = (var("a") | var("b")) & (var("b") | var("c")) & (var("a") | var("c"));
+
+        let actual = input.to_dnf();
+        let expected = (var("a") & var("b")) | (var("b") & var("c")) | (var("a") & var("c"));
+
+        assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_dnf());
+        println!("{actual}")
+    }
+
+    #[test]
+    fn to_dnf_advanced() {
+        let input =
+            (var("A") | (var("B") & (var("C") | var("D")))) & (var("E") | (var("F") & !var("G")));
+
+        let actual = input.to_dnf();
+        let expected = (var("E") & var("A"))
+            | (var("E") & var("B") & var("C"))
+            | (var("E") & var("B") & var("D"))
+            | (var("F") & !var("G") & var("A"))
+            | (var("F") & !var("G") & var("B") & var("C"))
+            | (var("F") & !var("G") & var("B") & var("D"));
+
+        assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_dnf());
     }
 
     #[test]

@@ -1,6 +1,5 @@
 use crate::iterators::DomainIterator;
 use crate::table::iterators::{ImageIterator, RelationIterator, SupportIterator};
-use crate::table::utils::values_to_row_index;
 use crate::table::TruthTable;
 use crate::traits::{
     BooleanFunction, BooleanValuation, Evaluate, GatherLiterals, PowerSet, SemanticEq,
@@ -109,9 +108,7 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
                 );
 
             // alter current valuation based on mappings
-            for (index, (_bool, variable)) in
-                original_point.into_iter().zip(&final_inputs).enumerate()
-            {
+            for (index, variable) in final_inputs.iter().enumerate() {
                 if let Some(substitution_table) = mapping.get(variable) {
                     let output = substitution_table.evaluate(&original_valuation);
                     final_point[index] = output;
@@ -122,8 +119,7 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
                 .expect(
                     "Point should be from domain of the same dimension as the number of inputs",
                 );
-            let final_index = values_to_row_index(&self.inputs, &final_valuation);
-            outputs.push(self.outputs[final_index])
+            outputs.push(self.evaluate(&final_valuation))
         }
 
         TruthTable::new(Vec::from_iter(final_inputs), outputs)

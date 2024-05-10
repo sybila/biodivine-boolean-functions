@@ -43,7 +43,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord + 'static> Bdd<TLiteral> {
         self.inputs
             .binary_search(variable)
             .ok()
-            .map(|it| BddVariable::from_index(it))
+            .map(BddVariable::from_index)
     }
 
     /// Converts a `BddVariable` used by `lib_bdd::Bdd` into a literal representation
@@ -57,6 +57,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord + 'static> Bdd<TLiteral> {
     /// Creates a `BddVariableSet` used by `lib_bdd::Bdd`.
     ///
     /// Since `lib_bdd` only supports up to 2<sup>16</sup> variables, this method currently panics.
+    #[allow(dead_code)] //TODO: maybe remove
     fn make_inner_variable_set(variables: Vec<TLiteral>) -> BddVariableSet {
         let num_vars = u16::try_from(variables.len()).expect("Too many variables");
         BddVariableSet::new_anonymous(num_vars)

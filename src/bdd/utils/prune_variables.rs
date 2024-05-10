@@ -10,7 +10,7 @@ use std::fmt::Debug;
 /// `bdd.essential_inputs` is a subset of `new_inputs`. If this is not satisfied, panic.
 pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
     bdd: &Bdd<TLiteral>,
-    new_inputs: &Vec<TLiteral>,
+    new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {
     // Test pre-condition.
     debug_assert!(bdd
@@ -34,7 +34,7 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
     }
 
     Bdd {
-        inputs: new_inputs.clone(),
+        inputs: new_inputs.to_owned(),
         bdd: {
             let mut new_bdd = bdd.bdd.clone();
             unsafe {

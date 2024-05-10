@@ -1,5 +1,4 @@
 use crate::bdd::iterators::{ImageIterator, SupportIterator};
-use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
 use crate::bdd::Bdd;
 use crate::iterators::DomainIterator;
 use crate::traits::{BooleanFunction, BooleanPoint, BooleanValuation};
@@ -71,13 +70,8 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             inputs: self.inputs.clone(),
             bdd: self.bdd.restrict(&lib_bdd_valuation),
         };
-        let restricted_inputs = self
-            .inputs
-            .iter()
-            .filter(|var| !valuation.contains_key(var))
-            .cloned()
-            .collect::<Vec<_>>();
-        prune_bdd_variables(&new_bdd, &restricted_inputs)
+
+        self.restrict_and_prune_map(valuation, &new_bdd)
     }
 
     fn substitute(&self, _mapping: &BTreeMap<T, Self>) -> Self {
@@ -102,13 +96,8 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             inputs: self.inputs.clone(),
             bdd: self.bdd.exists(&lib_bdd_variables),
         };
-        let restricted_inputs = self
-            .inputs
-            .iter()
-            .filter(|var| !variables.contains(var))
-            .cloned()
-            .collect::<Vec<_>>();
-        prune_bdd_variables(&new_bdd, &restricted_inputs)
+
+        self.restrict_and_prune_set(&variables, &new_bdd)
     }
 
     fn universal_quantification(&self, variables: BTreeSet<T>) -> Self {
@@ -120,13 +109,8 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             inputs: self.inputs.clone(),
             bdd: self.bdd.for_all(&lib_bdd_variables),
         };
-        let restricted_inputs = self
-            .inputs
-            .iter()
-            .filter(|var| !variables.contains(var))
-            .cloned()
-            .collect::<Vec<_>>();
-        prune_bdd_variables(&new_bdd, &restricted_inputs)
+
+        self.restrict_and_prune_set(&variables, &new_bdd)
     }
 
     fn derivative(&self, variables: BTreeSet<T>) -> Self {
@@ -147,40 +131,18 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             ),
         };
 
-        let restricted_inputs = self
-            .inputs
-            .iter()
-            .filter(|var| !variables.contains(var))
-            .cloned()
-            .collect::<Vec<_>>();
-        prune_bdd_variables(&new_bdd, &restricted_inputs)
+        self.restrict_and_prune_set(&variables, &new_bdd)
     }
 
     fn is_equivalent(&self, other: &Self) -> bool {
-        let mut common_inputs = self.inputs.clone();
-        for other in &other.inputs {
-            if !common_inputs.contains(other) {
-                common_inputs.push(other.clone());
-            }
-        }
-        common_inputs.sort();
+        let (self_lifted, other_lifted, _common_inputs) = self.union_and_extend(other);
 
-        let self_lifted = extend_bdd_variables(self, &common_inputs);
-        let other_lifted = extend_bdd_variables(other, &common_inputs);
         self_lifted.bdd == other_lifted.bdd
     }
 
     fn is_implied_by(&self, other: &Self) -> bool {
-        let mut common_inputs = self.inputs.clone();
-        for other in &other.inputs {
-            if !common_inputs.contains(other) {
-                common_inputs.push(other.clone());
-            }
-        }
-        common_inputs.sort();
+        let (self_lifted, other_lifted, _common_inputs) = self.union_and_extend(other);
 
-        let self_lifted = extend_bdd_variables(self, &common_inputs);
-        let other_lifted = extend_bdd_variables(other, &common_inputs);
         other_lifted.bdd.imp(&self_lifted.bdd).is_true()
     }
 }

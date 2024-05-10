@@ -2,9 +2,9 @@ mod iterators;
 mod traits;
 mod utils;
 
-use crate::bdd::utils::extend_bdd_variables;
+use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
 use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::num::TryFromIntError;
 
@@ -69,5 +69,54 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
 
     pub(crate) fn inner(&self) -> &InnerBdd {
         &self.bdd
+    }
+
+    fn restrict_and_prune_map<TValue>(
+        &self,
+        valuation: &BTreeMap<TLiteral, TValue>,
+        new_bdd: &Bdd<TLiteral>,
+    ) -> Bdd<TLiteral> {
+        self.restrict_and_prune_common(valuation, new_bdd, |set, var| set.contains_key(var))
+    }
+
+    fn restrict_and_prune_set(
+        &self,
+        valuation: &BTreeSet<TLiteral>,
+        new_bdd: &Bdd<TLiteral>,
+    ) -> Bdd<TLiteral> {
+        self.restrict_and_prune_common(valuation, new_bdd, |set, var| set.contains(var))
+    }
+
+    fn restrict_and_prune_common<TCollection, P: Fn(&TCollection, &&TLiteral) -> bool>(
+        &self,
+        valuation: &TCollection,
+        new_bdd: &Bdd<TLiteral>,
+        contains: P,
+    ) -> Bdd<TLiteral> {
+        let restricted_inputs = self
+            .inputs
+            .iter()
+            .filter(|var| !contains(valuation, var))
+            .cloned()
+            .collect::<Vec<_>>();
+        prune_bdd_variables(new_bdd, &restricted_inputs)
+    }
+
+    fn union_and_extend(
+        &self,
+        other: &Bdd<TLiteral>,
+    ) -> (Bdd<TLiteral>, Bdd<TLiteral>, Vec<TLiteral>) {
+        let mut common_inputs = self.inputs.clone();
+        for other in &other.inputs {
+            if !common_inputs.contains(other) {
+                common_inputs.push(other.clone());
+            }
+        }
+        common_inputs.sort();
+
+        let self_lifted = extend_bdd_variables(self, &common_inputs);
+        let other_lifted = extend_bdd_variables(other, &common_inputs);
+
+        (self_lifted, other_lifted, common_inputs)
     }
 }

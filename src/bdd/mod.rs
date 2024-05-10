@@ -52,7 +52,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
     /// used by `self`.
     ///
     /// If such a variable isn't used in this `Bdd`, the method returns `None`.
-    fn map_var_inner_to_outer(&self, variable: BddVariable) -> Option<TLiteral> {
+    pub(crate) fn map_var_inner_to_outer(&self, variable: BddVariable) -> Option<TLiteral> {
         self.inputs.get(variable.to_index()).cloned()
     }
 
@@ -65,5 +65,9 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
     ) -> Result<BddVariableSet, TryFromIntError> {
         let num_vars = u16::try_from(variables.len())?;
         Ok(BddVariableSet::new_anonymous(num_vars))
+    }
+
+    pub(crate) fn inner(&self) -> &InnerBdd {
+        &self.bdd
     }
 }

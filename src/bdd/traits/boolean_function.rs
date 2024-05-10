@@ -74,13 +74,29 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
         self.restrict_and_prune_map(valuation, &new_bdd)
     }
 
-    fn substitute(&self, _mapping: &BTreeMap<T, Self>) -> Self {
+    fn substitute(&self, mapping: &BTreeMap<T, Self>) -> Self {
         // Bdd.substitute exists, but assumes all BDDs share input variables (we need to extend)
         // and does not eliminate the substituted variable from inputs afterward (we need to prune).
 
         // Bdd.substitute currently assumes that the substituted functions does not depend on the
         // substituted variables. This will be solved in lib-bdd, we can just panic for now.
-        todo!()
+        if mapping
+            .iter()
+            .any(|(key, value_bdd)| value_bdd.inputs.contains(key))
+        {
+            panic!("Currently not allowed to have the substituted variable also appear in the substituting BDD value");
+        }
+
+        let mut extended_mapping = mapping.clone();
+        let (mut self_lifted, _common_inputs) = self.union_and_extend_n_ary(&mut extended_mapping);
+
+        for (k, v) in extended_mapping.iter() {
+            self_lifted.bdd = self_lifted
+                .bdd
+                .substitute(self_lifted.map_var_outer_to_inner(k).unwrap(), &v.bdd)
+        }
+
+        self_lifted.restrict_and_prune_map(&extended_mapping, &self_lifted)
     }
 
     fn sat_point(&self) -> Option<BooleanPoint> {

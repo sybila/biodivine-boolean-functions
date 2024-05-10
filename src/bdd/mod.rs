@@ -1,11 +1,14 @@
+mod iterators;
+
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Debug;
-use std::ops::BitAnd;
+use std::iter::{zip, Zip};
 
+use crate::bdd::iterators::{ImageIterator, SupportIterator};
 use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
 use num_bigint::BigUint;
 
-use crate::iterators::{DomainIterator, ImageIterator, RelationIterator, SupportIterator};
+use crate::iterators::DomainIterator;
 use crate::traits::{BooleanFunction, BooleanPoint, BooleanValuation};
 
 /*
@@ -65,40 +68,11 @@ impl<TLiteral: Debug + Clone + Eq + Ord + 'static> Bdd<TLiteral> {
     }
 }
 
-impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitAnd for Bdd<TLiteral> {
-    type Output = Bdd<TLiteral>;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        if self.inputs == rhs.inputs {
-            Bdd {
-                inputs: self.inputs.clone(),
-                bdd: self.bdd.and(&rhs.bdd),
-            }
-        } else {
-            let mut common_inputs = self.inputs.clone();
-            for other in &rhs.inputs {
-                if !common_inputs.contains(other) {
-                    common_inputs.push(other.clone());
-                }
-            }
-            common_inputs.sort();
-
-            let self_lifted = extend_bdd_variables(&self, &common_inputs);
-            let rhs_lifted = extend_bdd_variables(&rhs, &common_inputs);
-
-            Bdd {
-                inputs: common_inputs,
-                bdd: self_lifted.bdd.and(&rhs_lifted.bdd),
-            }
-        }
-    }
-}
-
-impl<T: Debug + Clone + Eq + Ord + 'static> BooleanFunction<T> for Bdd<T> {
+impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for Bdd<T> {
     type DomainIterator = DomainIterator;
-    type RangeIterator = ImageIterator<T>;
-    type RelationIterator = RelationIterator<T>;
-    type SupportIterator = SupportIterator<T>;
+    type RangeIterator = ImageIterator;
+    type RelationIterator = Zip<DomainIterator, ImageIterator>;
+    type SupportIterator = SupportIterator;
 
     fn inputs(&self) -> BTreeSet<T> {
         self.inputs.iter().cloned().collect()
@@ -124,24 +98,22 @@ impl<T: Debug + Clone + Eq + Ord + 'static> BooleanFunction<T> for Bdd<T> {
     }
 
     fn domain(&self) -> Self::DomainIterator {
-        todo!()
+        DomainIterator::from_count(self.inputs.len())
     }
 
     fn image(&self) -> Self::RangeIterator {
         // evaluate for each domain point
         // DomainIterator::new(self).map(|it| self.bdd.eval_in(&BddValuation::new(it)));
-        todo!()
+        ImageIterator::new(self.inputs.len(), &self.bdd)
     }
 
     fn relation(&self) -> Self::RelationIterator {
         // zip domain/range
-        todo!()
+        zip(self.domain(), self.image())
     }
 
     fn support(&self) -> Self::SupportIterator {
-        // Only points that satisfy the function
-        self.bdd.sat_valuations().map(|it| it.vector());
-        todo!()
+        SupportIterator::new(&self.bdd)
     }
 
     fn weight(&self) -> BigUint {

@@ -1,4 +1,4 @@
-use crate::bdd::{extend_bdd_variables, Bdd};
+use crate::bdd::Bdd;
 use std::fmt::Debug;
 use std::ops::BitAnd;
 
@@ -12,16 +12,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitAnd for Bdd<TLiteral> {
                 bdd: self.bdd.and(&rhs.bdd),
             }
         } else {
-            let mut common_inputs = self.inputs.clone();
-            for other in &rhs.inputs {
-                if !common_inputs.contains(other) {
-                    common_inputs.push(other.clone());
-                }
-            }
-            common_inputs.sort();
-
-            let self_lifted = extend_bdd_variables(&self, &common_inputs);
-            let rhs_lifted = extend_bdd_variables(&rhs, &common_inputs);
+            let (self_lifted, rhs_lifted, common_inputs) = self.union_and_extend(&rhs);
 
             Bdd {
                 inputs: common_inputs,

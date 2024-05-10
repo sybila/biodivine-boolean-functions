@@ -8,7 +8,7 @@ use crate::utils::{boolean_point_to_valuation, btreeset_to_valuation};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
-impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for TruthTable<T> {
+impl<T: Debug + Clone + Ord> BooleanFunction<T> for TruthTable<T> {
     type DomainIterator = DomainIterator;
     type RangeIterator = ImageIterator;
     type RelationIterator = RelationIterator;

@@ -2,6 +2,7 @@ mod bit;
 mod boolean_function;
 mod display;
 mod evaluate;
+mod from_bdd;
 mod gather_literals;
 mod operations;
 mod parse;

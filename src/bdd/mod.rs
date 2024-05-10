@@ -119,4 +119,28 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
 
         (self_lifted, other_lifted, common_inputs)
     }
+
+    fn union_and_extend_n_ary(
+        &self,
+        others: &mut BTreeMap<TLiteral, Bdd<TLiteral>>,
+    ) -> (Bdd<TLiteral>, Vec<TLiteral>) {
+        let mut common_inputs = self.inputs.clone();
+
+        for other in others.values() {
+            for input in &other.inputs {
+                if !common_inputs.contains(input) {
+                    common_inputs.push(input.clone());
+                }
+            }
+        }
+
+        common_inputs.sort();
+
+        let self_lifted = extend_bdd_variables(self, &common_inputs);
+        for other in others.values_mut() {
+            *other = extend_bdd_variables(other, &common_inputs);
+        }
+
+        (self_lifted, common_inputs)
+    }
 }

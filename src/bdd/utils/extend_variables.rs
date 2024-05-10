@@ -12,7 +12,7 @@ use std::fmt::Debug;
 /// condition is not satisfied, the method will panic.
 pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
     bdd: &Bdd<TLiteral>,
-    new_inputs: &Vec<TLiteral>,
+    new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {
     // Test pre-condition.
     debug_assert!(bdd.inputs.iter().all(|it| new_inputs.contains(it)));
@@ -35,7 +35,7 @@ pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
     }
 
     Bdd {
-        inputs: new_inputs.clone(),
+        inputs: new_inputs.to_owned(),
         bdd: {
             let mut new_bdd = bdd.bdd.clone();
             unsafe {

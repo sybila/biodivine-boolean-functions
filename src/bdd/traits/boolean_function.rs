@@ -165,8 +165,8 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for Bdd<T> {
         }
         common_inputs.sort();
 
-        let self_lifted = extend_bdd_variables(&self, &common_inputs);
-        let other_lifted = extend_bdd_variables(&other, &common_inputs);
+        let self_lifted = extend_bdd_variables(self, &common_inputs);
+        let other_lifted = extend_bdd_variables(other, &common_inputs);
         self_lifted.bdd == other_lifted.bdd
     }
 
@@ -179,8 +179,8 @@ impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for Bdd<T> {
         }
         common_inputs.sort();
 
-        let self_lifted = extend_bdd_variables(&self, &common_inputs);
-        let other_lifted = extend_bdd_variables(&other, &common_inputs);
+        let self_lifted = extend_bdd_variables(self, &common_inputs);
+        let other_lifted = extend_bdd_variables(other, &common_inputs);
         other_lifted.bdd.imp(&self_lifted.bdd).is_true()
     }
 }

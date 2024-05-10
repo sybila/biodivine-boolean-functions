@@ -8,7 +8,7 @@ use std::fmt::Debug;
 ///
 /// This expects the `Bdd` to only depend on the variables in `new_inputs`, meaning that
 /// `bdd.essential_inputs` is a subset of `new_inputs`. If this is not satisfied, panic.
-pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
+pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     bdd: &Bdd<TLiteral>,
     new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {

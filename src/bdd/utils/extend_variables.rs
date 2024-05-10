@@ -10,7 +10,7 @@ use std::fmt::Debug;
 ///
 /// As such, it must hold that `new_inputs` is a superset of `bdd.inputs`. Currently, if this
 /// condition is not satisfied, the method will panic.
-pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord + 'static>(
+pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     bdd: &Bdd<TLiteral>,
     new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {

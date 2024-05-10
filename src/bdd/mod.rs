@@ -34,7 +34,7 @@ where
     bdd: InnerBdd,
 }
 
-impl<TLiteral: Debug + Clone + Eq + Ord + 'static> Bdd<TLiteral> {
+impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
     /// Converts a literal representation as a generic user struct
     /// into `BddVariable` used by `lib_bdd::Bdd`.
     ///

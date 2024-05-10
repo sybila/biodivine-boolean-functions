@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt::Debug;
 use std::iter::{zip, Zip};
 
-impl<T: Debug + Clone + Ord + 'static> BooleanFunction<T> for Bdd<T> {
+impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
     type DomainIterator = DomainIterator;
     type RangeIterator = ImageIterator;
     type RelationIterator = Zip<DomainIterator, ImageIterator>;

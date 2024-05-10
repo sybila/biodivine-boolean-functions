@@ -4,7 +4,9 @@ mod utils;
 
 use crate::bdd::utils::extend_bdd_variables;
 use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
+use std::collections::BTreeSet;
 use std::fmt::Debug;
+use std::num::TryFromIntError;
 
 /*
    Conversions:
@@ -56,10 +58,12 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
 
     /// Creates a `BddVariableSet` used by `lib_bdd::Bdd`.
     ///
-    /// Since `lib_bdd` only supports up to 2<sup>16</sup> variables, this method currently panics.
-    #[allow(dead_code)] //TODO: maybe remove
-    fn make_inner_variable_set(variables: Vec<TLiteral>) -> BddVariableSet {
-        let num_vars = u16::try_from(variables.len()).expect("Too many variables");
-        BddVariableSet::new_anonymous(num_vars)
+    /// Since `lib_bdd` only supports up to 2<sup>16</sup> variables, this method returns an `Err` if
+    /// the number of `variables` is above that.
+    fn make_inner_variable_set(
+        variables: BTreeSet<TLiteral>,
+    ) -> Result<BddVariableSet, TryFromIntError> {
+        let num_vars = u16::try_from(variables.len())?;
+        Ok(BddVariableSet::new_anonymous(num_vars))
     }
 }

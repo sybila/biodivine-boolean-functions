@@ -25,9 +25,9 @@ impl<T: Debug + Clone + Ord> TryFrom<TruthTable<T>> for Bdd<T> {
             })
             .collect::<Vec<_>>();
 
-        Ok(Bdd {
-            inputs: literals.into_iter().collect(),
-            bdd: literal_set.mk_dnf(&valuations),
-        })
+        Ok(Bdd::new(
+            literal_set.mk_dnf(&valuations),
+            literals.into_iter().collect(),
+        ))
     }
 }

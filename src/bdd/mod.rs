@@ -37,6 +37,10 @@ where
 }
 
 impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
+    pub(crate) fn new(inner: InnerBdd, inputs: Vec<TLiteral>) -> Self {
+        Self { bdd: inner, inputs }
+    }
+
     /// Converts a literal representation as a generic user struct
     /// into `BddVariable` used by `lib_bdd::Bdd`.
     ///

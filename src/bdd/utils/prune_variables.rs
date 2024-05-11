@@ -33,20 +33,16 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
         }
     }
 
-    Bdd {
-        inputs: new_inputs.to_owned(),
-        bdd: {
-            let mut new_bdd = bdd.bdd.clone();
-            unsafe {
-                // These operations are not memory-unsafe, they can just break the BDD
-                // in weird ways if you don't know what you are doing.
-                new_bdd.rename_variables(&permutation);
-                new_bdd.set_num_vars(u16::try_from(new_inputs.len()).unwrap());
-                // Also, notice that here, we are setting the variable count *after*
-                // the permutation, not before, because it is actually decreasing, not
-                // increasing.
-            }
-            new_bdd
-        },
+    let mut new_bdd = bdd.bdd.clone();
+    unsafe {
+        // These operations are not memory-unsafe, they can just break the BDD
+        // in weird ways if you don't know what you are doing.
+        new_bdd.rename_variables(&permutation);
+        new_bdd.set_num_vars(u16::try_from(new_inputs.len()).unwrap());
+        // Also, notice that here, we are setting the variable count *after*
+        // the permutation, not before, because it is actually decreasing, not
+        // increasing.
     }
+
+    Bdd::new(new_bdd, new_inputs.to_owned())
 }

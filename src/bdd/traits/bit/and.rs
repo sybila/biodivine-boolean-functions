@@ -7,17 +7,11 @@ impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitAnd for Bdd<TLiteral> {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         if self.inputs == rhs.inputs {
-            Bdd {
-                inputs: self.inputs.clone(),
-                bdd: self.bdd.and(&rhs.bdd),
-            }
+            Bdd::new(self.bdd.and(&rhs.bdd), self.inputs.clone())
         } else {
             let (self_lifted, rhs_lifted, common_inputs) = self.union_and_extend(&rhs);
 
-            Bdd {
-                inputs: common_inputs,
-                bdd: self_lifted.bdd.and(&rhs_lifted.bdd),
-            }
+            Bdd::new(self_lifted.bdd.and(&rhs_lifted.bdd), common_inputs)
         }
     }
 }

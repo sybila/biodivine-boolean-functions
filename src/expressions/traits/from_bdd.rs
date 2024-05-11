@@ -32,3 +32,45 @@ impl<T: Debug + Clone + Ord> From<Bdd<T>> for Expression<T> {
         Expression::n_ary_or(&and_expressions)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::traits::SemanticEq;
+    use biodivine_lib_bdd::BddVariableSet;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_expression_from_bdd_standard() {
+        let exp_string = "(b | a & c) & !a".to_string();
+        let inputs = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let var_set = BddVariableSet::from(inputs.clone());
+        let inner_bdd = var_set.eval_expression_string(&exp_string);
+        let bdd = Bdd::new(inner_bdd, inputs);
+
+        let expected = Expression::from_str(&exp_string).unwrap();
+        let actual = Expression::from(bdd);
+
+        assert!(
+            actual.semantic_eq(&expected),
+            "expected: `{expected}`,\nactual: `{actual}`"
+        );
+    }
+
+    #[test]
+    fn test_expression_from_bdd_n_ary() {
+        let exp_string = "(a | b | c) | (!a & !b & !c)".to_string();
+        let inputs = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let var_set = BddVariableSet::from(inputs.clone());
+        let inner_bdd = var_set.eval_expression_string(&exp_string);
+        let bdd = Bdd::new(inner_bdd, inputs);
+
+        let expected = Expression::from_str(&exp_string).unwrap();
+        let actual = Expression::from(bdd);
+
+        assert!(
+            actual.semantic_eq(&expected),
+            "expected: `{expected}`,\nactual: `{actual}`"
+        );
+    }
+}

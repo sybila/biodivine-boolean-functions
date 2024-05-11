@@ -21,10 +21,10 @@ impl<T: Debug + Clone + Ord> TryFrom<Expression<T>> for Bdd<T> {
         );
         let literal_set = Self::make_inner_variable_set(literals.clone())?;
 
-        Ok(Bdd {
-            bdd: try_from_rec(&value, &literal_set, &mapping),
-            inputs: mapping.into_keys().collect(),
-        })
+        Ok(Bdd::new(
+            try_from_rec(&value, &literal_set, &mapping),
+            mapping.into_keys().collect(),
+        ))
     }
 }
 

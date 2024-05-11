@@ -66,10 +66,7 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             .iter()
             .filter_map(|(a, b)| self.map_var_outer_to_inner(a).map(|var| (var, *b)))
             .collect::<Vec<_>>();
-        let new_bdd = Bdd {
-            inputs: self.inputs.clone(),
-            bdd: self.bdd.restrict(&lib_bdd_valuation),
-        };
+        let new_bdd = Bdd::new(self.bdd.restrict(&lib_bdd_valuation), self.inputs.clone());
 
         self.restrict_and_prune_map(valuation, &new_bdd)
     }
@@ -108,10 +105,7 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             .iter()
             .filter_map(|it| self.map_var_outer_to_inner(it))
             .collect::<Vec<_>>();
-        let new_bdd = Bdd {
-            inputs: self.inputs.clone(),
-            bdd: self.bdd.exists(&lib_bdd_variables),
-        };
+        let new_bdd = Bdd::new(self.bdd.exists(&lib_bdd_variables), self.inputs.clone());
 
         self.restrict_and_prune_set(&variables, &new_bdd)
     }
@@ -121,10 +115,7 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             .iter()
             .filter_map(|it| self.map_var_outer_to_inner(it))
             .collect::<Vec<_>>();
-        let new_bdd = Bdd {
-            inputs: self.inputs.clone(),
-            bdd: self.bdd.for_all(&lib_bdd_variables),
-        };
+        let new_bdd = Bdd::new(self.bdd.for_all(&lib_bdd_variables), self.inputs.clone());
 
         self.restrict_and_prune_set(&variables, &new_bdd)
     }
@@ -136,16 +127,16 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             .collect::<HashSet<_>>();
         let trigger = |var: BddVariable| lib_bdd_variables.contains(&var);
 
-        let new_bdd = Bdd {
-            inputs: self.inputs.clone(),
-            bdd: InnerBdd::binary_op_nested(
+        let new_bdd = Bdd::new(
+            InnerBdd::binary_op_nested(
                 &self.bdd,
                 &self.bdd,
                 trigger,
                 biodivine_lib_bdd::op_function::and,
                 biodivine_lib_bdd::op_function::xor,
             ),
-        };
+            self.inputs.clone(),
+        );
 
         self.restrict_and_prune_set(&variables, &new_bdd)
     }

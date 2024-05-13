@@ -43,8 +43,6 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
     }
 
     fn image(&self) -> Self::RangeIterator {
-        // evaluate for each domain point
-        // DomainIterator::new(self).map(|it| self.bdd.eval_in(&BddValuation::new(it)));
         ImageIterator::new(self.inputs.len(), &self.bdd)
     }
 

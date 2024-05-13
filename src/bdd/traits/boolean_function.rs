@@ -158,6 +158,80 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
 mod tests {
     use super::*;
     use crate::expressions::{bool, var, Expression};
+    use crate::table::TruthTable;
+    use crate::traits::Implication;
+
+    #[test]
+    fn test_inputs_ok() {
+        for var_count in 0..100 {
+            let vars = (0..var_count).map(var).collect::<Vec<_>>();
+            let input = Bdd::try_from(Expression::n_ary_and(&vars)).expect("Should not panic here");
+
+            let expected = BTreeSet::from_iter((0..var_count).map(|c| c.to_string()));
+            let actual = input.inputs();
+
+            assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn test_essential_inputs_all_inputs_ok() {
+        let input = Bdd::try_from(var("a") & var("b")).expect("Should not panic here");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_essential_inputs_no_inputs_ok() {
+        let input = Bdd::try_from((var("a") & var("b")).imply(var("c") | !var("c")))
+            .expect("Should not panic here");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::new();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_essential_inputs_some_inputs_ok() {
+        // the boolean function doesn't depend on Z, but does on X and Y
+        // "x,y,z,output\n",
+        // "0,0,1,1\n",
+        // "0,0,0,1\n",
+        // "0,1,1,0\n",
+        // "0,1,0,0\n",
+        // "1,0,1,0\n",
+        // "1,0,0,0\n",
+        // "1,1,1,0\n",
+        // "1,1,0,0\n",
+
+        let input = Bdd::try_from(
+            TruthTable::new(
+                vec!["x", "y", "z"],
+                vec![false, false, true, true, true, true, true, true],
+            )
+            .to_expression_trivial(),
+        )
+        .expect("Should not panic here");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["x", "y"]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_essential_inputs_xor_all_inputs_ok() {
+        let input = Bdd::try_from(var("a") ^ var("b")).expect("Should not panic here");
+
+        let actual = input.essential_inputs();
+        let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn test_restrict_ok() {

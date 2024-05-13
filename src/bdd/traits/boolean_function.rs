@@ -181,8 +181,9 @@ mod tests {
 
         let actual = input.essential_inputs();
         let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
-
         assert_eq!(actual, expected);
+
+        assert_eq!(input.essential_degree(), 2);
     }
 
     #[test]
@@ -194,6 +195,7 @@ mod tests {
         let expected = BTreeSet::new();
 
         assert_eq!(actual, expected);
+        assert_eq!(input.essential_degree(), 0);
     }
 
     #[test]
@@ -222,6 +224,9 @@ mod tests {
         let expected = BTreeSet::from_iter(["x", "y"]);
 
         assert_eq!(actual, expected);
+
+        assert_eq!(input.degree(), 3);
+        assert_eq!(input.essential_degree(), 2);
     }
 
     #[test]
@@ -232,6 +237,7 @@ mod tests {
         let expected = BTreeSet::from_iter(["a".to_string(), "b".to_string()]);
 
         assert_eq!(actual, expected);
+        assert_eq!(input.essential_degree(), 2);
     }
 
     #[test]

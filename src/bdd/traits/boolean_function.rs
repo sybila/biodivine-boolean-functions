@@ -300,6 +300,55 @@ mod tests {
     }
 
     #[test]
+    fn test_support_ok() {
+        let input = Bdd::try_from(var("d") & var("b") | var("a")).expect("Should not panic here");
+
+        let actual = BTreeSet::from_iter(input.support());
+        let expected = BTreeSet::from([
+            vec![false, true, true],
+            vec![true, false, false],
+            vec![true, false, true],
+            vec![true, true, false],
+            vec![true, true, true],
+        ]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_support_2_ok() {
+        let input = Bdd::try_from(var("d") & var("b") | var("c")).expect("Should not panic here");
+
+        let mut actual = input.support();
+        let expected = [
+            Some(vec![false, true, false]),
+            Some(vec![false, true, true]),
+            Some(vec![true, false, true]),
+            Some(vec![true, true, false]),
+            Some(vec![true, true, true]),
+        ];
+
+        assert_eq!(actual.next(), expected[0]);
+        assert_eq!(actual.next(), expected[1]);
+        assert_eq!(actual.next(), expected[2]);
+        assert_eq!(actual.next(), expected[3]);
+        assert_eq!(actual.next(), expected[4]);
+
+        assert_eq!(actual.next(), None);
+        assert_eq!(actual.next(), None);
+    }
+
+    #[test]
+    fn test_no_support_2_ok() {
+        let input = Bdd::try_from(var("a") & !var("a")).expect("Should not panic here");
+
+        let mut actual = input.support();
+
+        assert_eq!(actual.next(), None);
+        assert_eq!(actual.next(), None);
+    }
+
+    #[test]
     fn test_restrict_ok() {
         let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
         let valuation = BTreeMap::from_iter([("a".to_string(), false), ("c".to_string(), true)]);

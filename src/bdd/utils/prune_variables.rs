@@ -24,7 +24,7 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     // and the `new_inputs` is a subset of `bdd.inputs`.
     let mut new_i = 0usize;
     for (old_i, var) in bdd.inputs.iter().enumerate() {
-        if &new_inputs[new_i] == var {
+        if new_i < new_inputs.len() && &new_inputs[new_i] == var {
             permutation.insert(
                 BddVariable::from_index(old_i),
                 BddVariable::from_index(new_i),
@@ -45,4 +45,19 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     }
 
     Bdd::new(new_bdd, new_inputs.to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expressions::var;
+
+    #[test]
+    #[should_panic]
+    fn test_prune_variables_nonsubset_nok() {
+        let input = Bdd::try_from(var("a") & var("b")).unwrap();
+        let new_vars = vec!["a".to_string(), "c".to_string()];
+
+        let _ = prune_bdd_variables(&input, &new_vars);
+    }
 }

@@ -259,6 +259,47 @@ mod tests {
     }
 
     #[test]
+    fn test_relation_ok() {
+        let input = Bdd::try_from(var("d") & var("b") | var("a")).expect("Should not panic here");
+
+        let mut actual = input.relation();
+        let expected = vec![
+            vec![false, false, false],
+            vec![false, false, true],
+            vec![false, true, false],
+            vec![false, true, true],
+            vec![true, false, false],
+            vec![true, false, true],
+            vec![true, true, false],
+            vec![true, true, true],
+        ]
+        .into_iter()
+        .map(|point| {
+            Some((
+                point.clone(),
+                input.evaluate(&BTreeMap::from_iter(vec![
+                    ("a".to_string(), point[0]),
+                    ("b".to_string(), point[1]),
+                    ("d".to_string(), point[2]),
+                ])),
+            ))
+        })
+        .collect::<Vec<_>>();
+
+        assert_eq!(actual.next(), expected[0]);
+        assert_eq!(actual.next(), expected[1]);
+        assert_eq!(actual.next(), expected[2]);
+        assert_eq!(actual.next(), expected[3]);
+        assert_eq!(actual.next(), expected[4]);
+        assert_eq!(actual.next(), expected[5]);
+        assert_eq!(actual.next(), expected[6]);
+        assert_eq!(actual.next(), expected[7]);
+
+        assert_eq!(actual.next(), None);
+        assert_eq!(actual.next(), None);
+    }
+
+    #[test]
     fn test_restrict_ok() {
         let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
         let valuation = BTreeMap::from_iter([("a".to_string(), false), ("c".to_string(), true)]);

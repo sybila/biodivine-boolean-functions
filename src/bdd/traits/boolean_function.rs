@@ -235,6 +235,26 @@ mod tests {
     }
 
     #[test]
+    fn test_domain_ok() {
+        let input = Bdd::try_from(var("d") & var("b") | var("a")).expect("Should not panic here");
+
+        let actual = input.domain().collect::<Vec<_>>();
+
+        let expected = vec![
+            vec![false, false, false],
+            vec![false, false, true],
+            vec![false, true, false],
+            vec![false, true, true],
+            vec![true, false, false],
+            vec![true, false, true],
+            vec![true, true, false],
+            vec![true, true, true],
+        ];
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_restrict_ok() {
         let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
         let valuation = BTreeMap::from_iter([("a".to_string(), false), ("c".to_string(), true)]);

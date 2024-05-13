@@ -60,3 +60,36 @@ fn try_from_rec<T: Debug + Clone + Ord>(
             .unwrap_or_else(|| literal_set.mk_false()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::traits::BooleanFunction;
+    use std::str::FromStr;
+    #[test]
+    fn test_bdd_from_expression() {
+        let exp_string = "(b | a & c) & !a".to_string();
+        let input = Expression::from_str(&exp_string).unwrap();
+        let actual = Bdd::try_from(input).unwrap();
+
+        let inputs = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let var_set = BddVariableSet::from(inputs.clone());
+        let inner_bdd = var_set.eval_expression_string(&exp_string);
+        let expected = Bdd::new(inner_bdd, inputs);
+
+        assert!(actual.is_equivalent(&expected))
+    }
+    #[test]
+    fn test_bdd_from_expression_n_ary() {
+        let exp_string = "(a | b | c) | (!a & !b & !c)".to_string();
+        let input = Expression::from_str(&exp_string).unwrap();
+        let actual = Bdd::try_from(input).unwrap();
+
+        let inputs = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let var_set = BddVariableSet::from(inputs.clone());
+        let inner_bdd = var_set.eval_expression_string(&exp_string);
+        let expected = Bdd::new(inner_bdd, inputs);
+
+        assert!(actual.is_equivalent(&expected))
+    }
+}

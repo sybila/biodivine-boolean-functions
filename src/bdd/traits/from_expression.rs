@@ -68,7 +68,7 @@ mod tests {
     use std::str::FromStr;
     #[test]
     fn test_bdd_from_expression() {
-        let exp_string = "(b | a & c) & !a".to_string();
+        let exp_string = "(b | a & c & false) & !a | true".to_string();
         let input = Expression::from_str(&exp_string).unwrap();
         let actual = Bdd::try_from(input).unwrap();
 

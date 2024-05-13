@@ -153,3 +153,55 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
         other_lifted.bdd.imp(&self_lifted.bdd).is_true()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expressions::{bool, var};
+
+    #[test]
+    fn test_restrict_ok() {
+        let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
+        let valuation = BTreeMap::from_iter([("a".to_string(), false), ("c".to_string(), true)]);
+
+        let expected =
+            Bdd::try_from((bool(false) | var("b")) & bool(true)).expect("Should not panic here");
+        let actual = input.restrict(&valuation);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+
+        assert_eq!(actual.degree(), 1);
+    }
+
+    #[test]
+    fn test_restrict_too_many_variables_ok() {
+        let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
+        let valuation = BTreeMap::from_iter([
+            ("a".to_string(), false),
+            ("c".to_string(), true),
+            ("notinthere".to_string(), true),
+        ]);
+
+        let expected =
+            Bdd::try_from((bool(false) | var("b")) & bool(true)).expect("Should not panic here");
+        let actual = input.restrict(&valuation);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+        assert_eq!(actual.degree(), 1);
+    }
+
+    #[test]
+    fn test_restrict_no_variables_ok() {
+        let input = Bdd::try_from((var("a") | var("b")) & var("c")).expect("Should not panic here");
+        let valuation = BTreeMap::new();
+
+        let expected = input.clone();
+        let actual = input.restrict(&valuation);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+        assert_eq!(actual.degree(), expected.degree());
+    }
+}

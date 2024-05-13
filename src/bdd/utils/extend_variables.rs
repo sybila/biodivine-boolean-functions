@@ -25,7 +25,7 @@ pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     // need to skip enough of the new variables.
     let mut old_i = 0;
     for (new_i, var) in new_inputs.iter().enumerate() {
-        if &bdd.inputs[old_i] == var {
+        if new_i < bdd.inputs.len() && &bdd.inputs[old_i] == var {
             permutation.insert(
                 BddVariable::from_index(old_i),
                 BddVariable::from_index(new_i),

@@ -18,7 +18,7 @@ mod tests {
     use crate::traits::{Implication, SemanticEq};
 
     #[test]
-    fn test_and_same_variables() {
+    fn test_or_same_variables() {
         let and = var("a") & var("b");
         let imply = var("a").imply(var("b"));
 
@@ -33,7 +33,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_different_variables_1() {
+    fn test_or_different_variables_1() {
         let and = var("a") & var("b");
         let imply = var("b").imply(var("c"));
 
@@ -48,7 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_different_variables_2() {
+    fn test_or_different_variables_2() {
         let and = var("c") & var("b");
         let imply = var("a").imply(var("d"));
 
@@ -63,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_different_variables_3() {
+    fn test_or_different_variables_3() {
         let lhs = TruthTable::new(vec!["a", "b"], vec![true, true, false, true]);
         let rhs = TruthTable::new(vec!["a", "c"], vec![false, true, false, true]);
 

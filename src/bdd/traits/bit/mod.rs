@@ -3,6 +3,8 @@ use biodivine_lib_bdd::Bdd as InnerBdd;
 use std::fmt::Debug;
 
 mod and;
+mod or;
+mod xor;
 
 fn bit_common<T: Debug + Clone + Ord, F: Fn(&InnerBdd, &InnerBdd) -> InnerBdd>(
     me: Bdd<T>,

@@ -12,6 +12,10 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     bdd: &Bdd<TLiteral>,
     new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {
+    if bdd.inputs == new_inputs {
+        return bdd.clone();
+    }
+
     // Test pre-condition.
     debug_assert!(bdd
         .essential_inputs()
@@ -22,14 +26,17 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
 
     // "Inverse" of `expand_bdd_variables`. This works because both input lists are sorted
     // and the `new_inputs` is a subset of `bdd.inputs`.
-    let mut new_i = 0usize;
-    for (old_i, var) in bdd.inputs.iter().enumerate() {
-        if new_i < new_inputs.len() && &new_inputs[new_i] == var {
+    for (new_i, var) in new_inputs.iter().enumerate() {
+        let old_i = bdd
+            .inputs
+            .binary_search(var)
+            .expect("Collection `new_inputs` is not a subset of `bdd.inputs`.");
+
+        if new_i != old_i {
             permutation.insert(
                 BddVariable::from_index(old_i),
                 BddVariable::from_index(new_i),
             );
-            new_i += 1;
         }
     }
 
@@ -37,7 +44,9 @@ pub fn prune_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     unsafe {
         // These operations are not memory-unsafe, they can just break the BDD
         // in weird ways if you don't know what you are doing.
-        new_bdd.rename_variables(&permutation);
+        if !permutation.is_empty() {
+            new_bdd.rename_variables(&permutation);
+        }
         new_bdd.set_num_vars(u16::try_from(new_inputs.len()).unwrap());
         // Also, notice that here, we are setting the variable count *after*
         // the permutation, not before, because it is actually decreasing, not

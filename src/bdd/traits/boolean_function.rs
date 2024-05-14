@@ -407,55 +407,59 @@ mod tests {
         assert_eq!(actual.degree(), expected.degree());
     }
 
-    // #[test]
-    // fn test_substitute_variables_same_substituted_ok() {
-    //     let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
-    //         .expect("Should not panic here");
-    //
-    //     let new_value = var("a") | !var("b");
-    //     let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
-    //     let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
-    //
-    //     // cannot use `var("a") | !var("b") | var("b")` for defining expected here
-    //     // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-    //     let expected = Bdd::try_from(
-    //         Expression::n_ary_or(&[new_value.clone(), var("b")])
-    //             & var("c")
-    //             & !new_value.clone()
-    //             & bool(true),
-    //     )
-    //     .expect("Should not panic here");
-    //     let actual = input.substitute(&mapping);
-    //
-    //     assert_eq!(expected, actual);
-    //     assert!(expected.is_equivalent(&actual));
-    //     assert_eq!(actual.degree(), expected.degree());
-    // }
-    //
-    // #[test]
-    // fn test_substitute_variables_same_unsubstituted_ok() {
-    //     let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
-    //         .expect("Should not panic here");
-    //
-    //     let new_value = var("c") | !var("b");
-    //     let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
-    //     let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
-    //
-    //     // cannot use `var("a") | !var("b") | var("b")` for defining expected here
-    //     // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-    //     let expected = Bdd::try_from(
-    //         Expression::n_ary_or(&[new_value.clone(), var("b")])
-    //             & var("c")
-    //             & !new_value.clone()
-    //             & bool(true),
-    //     )
-    //     .expect("Should not panic here");
-    //     let actual = input.substitute(&mapping);
-    //
-    //     assert_eq!(expected, actual);
-    //     assert!(expected.is_equivalent(&actual));
-    //     assert_eq!(actual.degree(), expected.degree());
-    // }
+    #[test]
+    #[should_panic]
+    fn test_substitute_variables_same_substituted_ok() {
+        let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
+            .expect("Should not panic here");
+
+        let new_value = var("a") | !var("b");
+        let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
+        let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
+
+        // cannot use `var("a") | !var("b") | var("b")` for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        let expected = Bdd::try_from(
+            Expression::n_ary_or(&[new_value.clone(), var("b")])
+                & var("c")
+                & !new_value.clone()
+                & bool(true),
+        )
+        .expect("Should not panic here");
+        let actual = input.substitute(&mapping);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+        assert_eq!(actual.degree(), expected.degree());
+    }
+
+    #[test]
+    fn test_substitute_variables_same_unsubstituted_ok() {
+        // (a | b) & c & !a & 1
+        let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
+            .expect("Should not panic here");
+
+        // c | !b
+        let new_value = var("c") | !var("b");
+        let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
+        let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
+
+        // cannot use `var("a") | !var("b") | var("b")` for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        // ((c | !b) | b) & c & !(c | !b) & 1
+        let expected = Bdd::try_from(
+            Expression::n_ary_or(&[new_value.clone(), var("b")])
+                & var("c")
+                & !new_value.clone()
+                & bool(true),
+        )
+        .expect("Should not panic here");
+        let actual = input.substitute(&mapping);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+        assert_eq!(actual.degree(), expected.degree());
+    }
 
     #[test]
     fn test_substitute_variables_added_only_ok() {
@@ -485,61 +489,65 @@ mod tests {
         assert_eq!(actual.degree(), expected.degree());
     }
 
-    // #[test]
-    // fn test_substitute_variables_added_and_substituted_ok() {
-    //     let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
-    //         .expect("Should not panic here");
-    //
-    //     let new_value = var("ddd") & (bool(false) | var("a"));
-    //     let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
-    //     let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
-    //
-    //     // cannot use bitwise operators for defining expected here
-    //     // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-    //     let expected = Bdd::try_from(
-    //         Expression::n_ary_or(&[new_value.clone(), var("b")])
-    //             & var("c")
-    //             & !new_value.clone()
-    //             & bool(true),
-    //     )
-    //     .expect("Should not panic here");
-    //     let actual = input.substitute(&mapping);
-    //
-    //     assert_eq!(expected, actual);
-    //     assert!(expected.is_equivalent(&actual));
-    //
-    //     assert_eq!(input.degree(), 3);
-    //     assert_eq!(actual.degree(), 4);
-    //     assert_eq!(expected.degree(), 4);
-    // }
-    //
-    // #[test]
-    // fn test_substitute_variables_added_and_unsubstituted_ok() {
-    //     let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
-    //         .expect("Should not panic here");
-    //
-    //     let new_value = var("ddd") & (bool(false) | var("b"));
-    //     let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
-    //     let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
-    //
-    //     // cannot use bitwise operators for defining expected here
-    //     // since that collapses Or(Or(a, !b), b), which substitute doesn't do
-    //     let expected = Bdd::try_from(
-    //         Expression::n_ary_or(&[new_value.clone(), var("b")])
-    //             & var("c")
-    //             & !new_value.clone()
-    //             & bool(true),
-    //     )
-    //     .expect("Should not panic here");
-    //     let actual = input.substitute(&mapping);
-    //
-    //     assert_eq!(expected, actual);
-    //     assert!(expected.is_equivalent(&actual));
-    //
-    //     assert_eq!(input.degree(), 3);
-    //     assert_eq!(actual.degree(), 3);
-    //     assert_eq!(expected.degree(), 3);
-    // }
+    #[test]
+    #[should_panic]
+    fn test_substitute_variables_added_and_substituted_ok() {
+        let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
+            .expect("Should not panic here");
+
+        let new_value = var("ddd") & (bool(false) | var("a"));
+        let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
+        let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
+
+        // cannot use bitwise operators for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        let expected = Bdd::try_from(
+            Expression::n_ary_or(&[new_value.clone(), var("b")])
+                & var("c")
+                & !new_value.clone()
+                & bool(true),
+        )
+        .expect("Should not panic here");
+        let actual = input.substitute(&mapping);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+
+        assert_eq!(input.degree(), 3);
+        assert_eq!(actual.degree(), 4);
+        assert_eq!(expected.degree(), 4);
+    }
+
+    #[test]
+    fn test_substitute_variables_added_and_unsubstituted_ok() {
+        // (a | b) & c & !a & 1
+        let input = Bdd::try_from((var("a") | var("b")) & var("c") & !var("a") & bool(true))
+            .expect("Should not panic here");
+
+        // ddd & (0 | b)
+        let new_value = var("ddd") & (bool(false) | var("b"));
+        let new_value_bdd = Bdd::try_from(new_value.clone()).expect("Should not panic here");
+        let mapping = BTreeMap::from_iter([("a".to_string(), new_value_bdd)]);
+
+        // cannot use bitwise operators for defining expected here
+        // since that collapses Or(Or(a, !b), b), which substitute doesn't do
+        // ((ddd & (0 | b)) | b) & c & !(ddd & (0 | b)) & 1
+        let expected = Bdd::try_from(
+            Expression::n_ary_or(&[new_value.clone(), var("b")])
+                & var("c")
+                & !new_value.clone()
+                & bool(true),
+        )
+        .expect("Should not panic here");
+        let actual = input.substitute(&mapping);
+
+        assert_eq!(expected, actual);
+        assert!(expected.is_equivalent(&actual));
+
+        assert_eq!(input.degree(), 3);
+        assert_eq!(actual.degree(), 3);
+        assert_eq!(expected.degree(), 3);
+    }
 
     #[test]
     fn test_substitute_variables_removed_ok() {

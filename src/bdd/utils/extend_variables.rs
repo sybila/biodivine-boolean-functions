@@ -14,6 +14,10 @@ pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     bdd: &Bdd<TLiteral>,
     new_inputs: &[TLiteral],
 ) -> Bdd<TLiteral> {
+    if bdd.inputs == new_inputs {
+        return bdd.clone();
+    }
+
     // Test pre-condition.
     debug_assert!(bdd.inputs.iter().all(|it| new_inputs.contains(it)));
 
@@ -23,14 +27,16 @@ pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
     // Also, since `bdd.inputs` is a subset of `new_inputs`, we know that every
     // `bdd.inputs[old_i]` must (eventually) appear in the `new_inputs` iterator, we just
     // need to skip enough of the new variables.
-    let mut old_i = 0;
-    for (new_i, var) in new_inputs.iter().enumerate() {
-        if new_i < bdd.inputs.len() && &bdd.inputs[old_i] == var {
+    for (old_i, var) in bdd.inputs.iter().enumerate() {
+        let new_i = new_inputs
+            .binary_search(var)
+            .expect("Collection `new_inputs` is not a superset of `bdd.inputs`.");
+
+        if new_i != old_i {
             permutation.insert(
                 BddVariable::from_index(old_i),
                 BddVariable::from_index(new_i),
             );
-            old_i += 1;
         }
     }
 
@@ -39,7 +45,9 @@ pub fn extend_bdd_variables<TLiteral: Debug + Clone + Eq + Ord>(
         // These operations are not memory-unsafe, they can just break the BDD
         // in weird ways if you don't know what you are doing.
         new_bdd.set_num_vars(u16::try_from(new_inputs.len()).unwrap());
-        new_bdd.rename_variables(&permutation);
+        if !permutation.is_empty() {
+            new_bdd.rename_variables(&permutation);
+        }
     }
 
     Bdd::new(new_bdd, new_inputs.to_owned())

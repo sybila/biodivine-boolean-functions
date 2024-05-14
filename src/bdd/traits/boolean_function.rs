@@ -30,10 +30,6 @@ impl<T: Debug + Clone + Ord> BooleanFunction<T> for Bdd<T> {
             .collect()
     }
 
-    fn degree(&self) -> usize {
-        self.inputs.len()
-    }
-
     fn essential_degree(&self) -> usize {
         self.bdd.support_set().len()
     }

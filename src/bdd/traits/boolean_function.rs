@@ -752,4 +752,15 @@ mod tests {
         assert_eq!(evaluated_with_true, evaluated_with_false);
         assert!(evaluated_with_true)
     }
+
+    #[test]
+    fn test_is_implied_by_unit_ok() {
+        let f = Bdd::try_from(bool(false)).expect("Should not panic here");
+        let t = Bdd::try_from(bool(true)).expect("Should not panic here");
+
+        assert!(f.is_implied_by(&f));
+        assert!(t.is_implied_by(&f));
+        assert!(!f.is_implied_by(&t));
+        assert!(t.is_implied_by(&t));
+    }
 }

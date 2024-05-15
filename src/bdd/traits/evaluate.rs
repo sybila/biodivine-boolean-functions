@@ -15,13 +15,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Evaluate<TLiteral> for Bdd<TLiteral> {
         let v = self
             .inputs
             .iter()
-            .map(|input| {
-                if let Some(var_is_true) = literal_values.get(input) {
-                    *var_is_true
-                } else {
-                    default_value
-                }
-            })
+            .map(|input| *literal_values.get(input).unwrap_or(&default_value))
             .collect_vec();
 
         self.bdd.eval_in(&BddValuation::new(v))
@@ -34,13 +28,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Evaluate<TLiteral> for Bdd<TLiteral> {
         let (point, errors): (Vec<_>, Vec<_>) = self
             .inputs
             .iter()
-            .map(|input| {
-                if let Some(var_is_true) = literal_values.get(input) {
-                    Ok(*var_is_true)
-                } else {
-                    Err(input.clone())
-                }
-            })
+            .map(|input| literal_values.get(input).copied().ok_or(input.clone()))
             .partition_result();
 
         if !errors.is_empty() {

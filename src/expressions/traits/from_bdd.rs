@@ -4,6 +4,12 @@ use std::fmt::Debug;
 
 impl<T: Debug + Clone + Ord> From<Bdd<T>> for Expression<T> {
     fn from(value: Bdd<T>) -> Self {
+        if value.inner().is_true() {
+            return ExpressionNode::Constant(true).into();
+        } else if value.inner().is_false() {
+            return ExpressionNode::Constant(false).into();
+        }
+
         let and_expressions = value
             .inner()
             .to_optimized_dnf()
@@ -36,8 +42,9 @@ impl<T: Debug + Clone + Ord> From<Bdd<T>> for Expression<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::SemanticEq;
+    use crate::traits::{BooleanFunction, SemanticEq};
     use biodivine_lib_bdd::BddVariableSet;
+    use rstest::rstest;
     use std::str::FromStr;
 
     #[test]
@@ -72,5 +79,20 @@ mod tests {
             actual.semantic_eq(&expected),
             "expected: `{expected}`,\nactual: `{actual}`"
         );
+    }
+
+    #[rstest]
+    fn test_bdd_from_expression_const(#[values("true", "false")] exp_string: &str) {
+        let inputs = vec![];
+        let var_set = BddVariableSet::from(inputs.clone());
+        let inner_bdd = var_set.eval_expression_string(exp_string);
+        let bdd = Bdd::new(inner_bdd, inputs);
+
+        let expected = Expression::from_str(exp_string).unwrap();
+        let actual = Expression::from(bdd);
+
+        println!("{expected}, {actual}");
+        assert!(actual.is_equivalent(&expected));
+        assert_eq!(actual, expected);
     }
 }

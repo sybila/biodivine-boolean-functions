@@ -153,7 +153,7 @@ mod tests {
     use super::*;
     use crate::expressions::{bool, var, Expression};
     use crate::table::TruthTable;
-    use crate::traits::{Evaluate, Implication};
+    use crate::traits::{Evaluate, GatherLiterals, Implication};
     use crate::utils::btreeset_to_valuation;
 
     #[test]
@@ -342,6 +342,74 @@ mod tests {
 
         assert_eq!(actual.next(), None);
         assert_eq!(actual.next(), None);
+    }
+
+    #[test]
+    fn test_saturating_point_some() {
+        let input = Bdd::try_from(var("0") & var("1") & var("2")).expect("Should not panic here");
+
+        let actual = input.sat_point();
+        let expected = Some(vec![true, true, true]);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_saturating_none() {
+        // (p ∨ q) ∧ (¬p) ∧ (¬q)
+        let input = Bdd::try_from(Expression::n_ary_and(&[
+            var("a") | var("b"),
+            !var("a"),
+            !var("b"),
+        ]))
+        .expect("Should not panic here");
+
+        let actual = input.sat_point();
+        let expected = None;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_one() {
+        let input = Bdd::try_from(var("0") & var("1") & var("2")).expect("Should not panic here");
+
+        let actual = input.weight();
+        let expected = BigUint::from(1u8);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_zero() {
+        let input = Bdd::try_from(Expression::n_ary_and(&[
+            var("a") | var("b"),
+            !var("a"),
+            !var("b"),
+        ]))
+        .expect("Should not panic here");
+
+        let actual = input.weight();
+        let expected = BigUint::from(0u8);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_weight_all() {
+        // tautology
+        let input = Bdd::try_from(
+            ((var("A").imply(var("B"))) & (!var("A").imply(!var("B")))).imply(var("A")),
+        )
+        .expect("Should not panic here");
+
+        // sanity
+        assert!(input.bdd.is_true());
+
+        let actual = input.weight();
+        let expected = 2usize.pow(input.gather_literals().len() as u32).into();
+
+        assert_eq!(actual, expected);
     }
 
     #[test]

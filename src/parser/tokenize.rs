@@ -17,7 +17,7 @@ fn tokenize_level(
 ) -> Result<Vec<FinalToken>, TokenizeError> {
     let mut result = vec![];
     let mut buffer = String::new();
-    let take_size = IntermediateToken::longest_token_len() + 1;
+    let take_size = IntermediateToken::LONGEST_TOKEN_LEN + 1;
 
     // trim whitespace in case of whitespace after opening parenthesis
     trim_whitespace_left(input);

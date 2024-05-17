@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use regex::RegexSet;
 
 use crate::parser::utils::LITERAL_IDENTIFIER;
@@ -103,25 +102,41 @@ impl<'a> IntermediateToken<'a> {
         .concat()
     }
 
-    pub fn longest_token_len() -> usize {
-        Self::all_token_patterns()
-            .iter()
-            .max_by(|a, b| a.chars().count().cmp(&b.chars().count()))
-            .expect("No patterns defined in the library")
-            .chars()
-            .count()
-    }
+    pub const ALL_TOKEN_PATTERNS_FROM_LONGEST: [&'static str; 26] = [
+        Self::FALSE_PATTERN_WORD,
+        Self::TRUE_PATTERN_WORD,
+        Self::AND_PATTERN_WORD,
+        Self::NOT_PATTERN_WORD,
+        Self::AND_PATTERN_LOGIC,
+        Self::OR_PATTERN_LOGIC,
+        Self::OR_PATTERN_WORD,
+        Self::AND_PATTERN_BIT,
+        Self::AND_PATTERN_MATH,
+        Self::AND_PATTERN_MATH_2,
+        Self::AND_PATTERN_BOOL,
+        Self::OR_PATTERN_BIT,
+        Self::OR_PATTERN_MATH,
+        Self::OR_PATTERN_MATH_2,
+        Self::OR_PATTERN_BOOL,
+        Self::NOT_PATTERN_TILDE,
+        Self::NOT_PATTERN_MARK,
+        Self::NOT_PATTERN_MATH,
+        Self::FALSE_PATTERN_CHAR,
+        Self::FALSE_PATTERN_NUM,
+        Self::TRUE_PATTERN_CHAR,
+        Self::TRUE_PATTERN_NUM,
+        Self::LITERAL_START_PATTERN,
+        Self::LITERAL_END_PATTERN,
+        Self::PARENTHESIS_START_PATTERN,
+        Self::PARENTHESIS_END_PATTERN,
+    ];
 
-    fn all_token_patterns_ordered_from_longest() -> Vec<&'a str> {
-        Self::all_token_patterns()
-            .into_iter()
-            .sorted_by(|a, b| b.chars().count().cmp(&a.chars().count()))
-            .collect()
-    }
+    // FALSE_PATTERN_WORD == "false"
+    pub const LONGEST_TOKEN_LEN: usize = 5;
 
     // TODO make a trait method
     pub fn try_from(value: &'a str) -> Option<IntermediateToken> {
-        let input = Self::all_token_patterns_ordered_from_longest();
+        let input = Self::ALL_TOKEN_PATTERNS_FROM_LONGEST;
 
         // escape the pattern so that e.g. "^" is not treated as regex, but as a literal character for the And operation
         let set = RegexSet::new(input.iter().map(|pattern| {
@@ -196,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_longest() {
-        let actual = IntermediateToken::longest_token_len();
+        let actual = IntermediateToken::LONGEST_TOKEN_LEN;
         let expected = IntermediateToken::FALSE_PATTERN_WORD.len();
 
         assert_eq!(actual, expected);
@@ -204,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_ordered_patterns() {
-        let tokens = IntermediateToken::all_token_patterns_ordered_from_longest();
+        let tokens = IntermediateToken::ALL_TOKEN_PATTERNS_FROM_LONGEST;
 
         assert!(tokens
             .iter()

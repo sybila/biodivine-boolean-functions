@@ -183,7 +183,7 @@ mod tests {
     };
     use crate::parser::error::EOL_VICINITY;
     use crate::parser::structs::FinalToken::*;
-    use crate::parser::utils::LITERAL_IDENTIFIER;
+    use regex::Regex;
 
     use super::*;
 
@@ -233,7 +233,7 @@ mod tests {
 
         // test sanity
         assert!(!all_tokens().contains(input));
-        assert!(!LITERAL_IDENTIFIER.is_match(input));
+        assert!(!Regex::new(r"[-_a-zA-Z0-9]+").unwrap().is_match(input));
 
         let actual = tokenize(input);
         let expected_err = UnknownSymbolError {

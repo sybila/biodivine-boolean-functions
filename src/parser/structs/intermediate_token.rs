@@ -1,6 +1,4 @@
-use regex::RegexSet;
-
-use crate::parser::utils::LITERAL_IDENTIFIER;
+use crate::parser::utils::PATTERN_SET;
 
 #[derive(PartialEq, Debug)]
 pub enum IntermediateToken<'a> {
@@ -136,26 +134,12 @@ impl<'a> IntermediateToken<'a> {
 
     // TODO make a trait method
     pub fn try_from(value: &'a str) -> Option<IntermediateToken> {
-        let input = Self::ALL_TOKEN_PATTERNS_FROM_LONGEST;
+        let patterns = Self::ALL_TOKEN_PATTERNS_FROM_LONGEST;
 
-        // escape the pattern so that e.g. "^" is not treated as regex, but as a literal character for the And operation
-        let set = RegexSet::new(input.iter().map(|pattern| {
-            format!(
-                r"(?i)^{}{}",
-                regex::escape(pattern),
-                if LITERAL_IDENTIFIER.is_match(pattern) {
-                    "([^-_a-zA-Z0-9]|$)"
-                } else {
-                    ""
-                }
-            )
-        }))
-        .unwrap();
-
-        let pattern_or_no_match = set
+        let pattern_or_no_match = PATTERN_SET
             .matches(value)
             .into_iter()
-            .map(|index| &input[index])
+            .map(|index| &patterns[index])
             .next();
 
         pattern_or_no_match.map(|value| Self::from(value))

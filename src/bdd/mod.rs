@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::num::TryFromIntError;
 
 use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
@@ -36,6 +36,13 @@ where
     inputs: Vec<TLiteral>,
     /// Holds the `lib_bdd` representation.
     bdd: InnerBdd,
+}
+
+impl<TLiteral: Debug + Clone + Eq + Ord + Display> Bdd<TLiteral> {
+    /// Creates the String-based `BddVariableSet` from `self` that `lib-bdd` operates with to map BDD node indexes to variables with names.
+    pub fn make_variable_set(&self) -> BddVariableSet {
+        BddVariableSet::from_iter(self.inputs.iter().map(ToString::to_string))
+    }
 }
 
 impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {

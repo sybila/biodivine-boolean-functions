@@ -1,5 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use pyo3::PyResult;
 
@@ -8,12 +7,12 @@ use crate::bindings::expression::PythonExpression;
 use crate::expressions::Expression as RustExpression;
 use crate::table::display_formatted::{TableBooleanFormatting, TableStyle};
 use crate::table::TruthTable;
-use crate::traits::{Evaluate, GatherLiterals, SemanticEq};
+use crate::traits::{BooleanFunction, Evaluate, GatherLiterals, SemanticEq};
 
-#[pyo3::pyclass(frozen)]
+#[pyo3::pyclass(frozen, name = "Table")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PythonTruthTable {
-    root: Arc<TruthTable<String>>,
+    root: TruthTable<String>,
 }
 
 #[pyo3::pymethods]
@@ -98,14 +97,35 @@ impl PythonTruthTable {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("PythonTruthTable({})", self.__str__())
+        format!("PythonTruthTable(\n{})", self.__str__())
+    }
+
+    #[staticmethod]
+    pub fn mk_and(left: &Self, right: &Self) -> Self {
+        PythonTruthTable::new(&left.root & &right.root)
+    }
+
+    #[staticmethod]
+    pub fn mk_or(left: &Self, right: &Self) -> Self {
+        PythonTruthTable::new(&left.root | &right.root)
+    }
+
+    #[staticmethod]
+    pub fn mk_xor(left: &Self, right: &Self) -> Self {
+        PythonTruthTable::new(&left.root ^ &right.root)
+    }
+
+    fn substitute(&self, mapping: HashMap<String, Self>) -> Self {
+        let mapping = mapping
+            .iter()
+            .map(|(a, b)| (a.clone(), b.root.clone()))
+            .collect::<BTreeMap<_, _>>();
+        PythonTruthTable::new(self.root.substitute(&mapping))
     }
 }
 
 impl PythonTruthTable {
     fn new(table: TruthTable<String>) -> Self {
-        PythonTruthTable {
-            root: Arc::new(table),
-        }
+        PythonTruthTable { root: table }
     }
 }

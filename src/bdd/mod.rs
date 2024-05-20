@@ -1,12 +1,14 @@
-mod iterators;
-mod traits;
-mod utils;
-
-use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
-use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::num::TryFromIntError;
+
+use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
+
+use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
+
+mod iterators;
+mod traits;
+mod utils;
 
 /*
    Conversions:
@@ -34,6 +36,28 @@ where
     inputs: Vec<TLiteral>,
     /// Holds the `lib_bdd` representation.
     bdd: InnerBdd,
+}
+
+impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
+    pub fn mk_const(value: bool) -> Bdd<TLiteral> {
+        let empty_set = BddVariableSet::new(&[]);
+        let inner = if value {
+            empty_set.mk_true()
+        } else {
+            empty_set.mk_false()
+        };
+        Bdd::new(inner, Vec::new())
+    }
+
+    pub fn mk_literal(variable: TLiteral, value: bool) -> Bdd<TLiteral> {
+        let singleton_set = BddVariableSet::new_anonymous(1);
+        let inner = singleton_set.mk_literal(BddVariable::from_index(0), value);
+        Bdd::new(inner, vec![variable])
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.bdd.size()
+    }
 }
 
 impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {

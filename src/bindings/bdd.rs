@@ -27,6 +27,11 @@ impl PythonBdd {
     }
 
     #[staticmethod]
+    pub fn mk_not(inner: &PythonBdd) -> PythonBdd {
+        PythonBdd::new(!(&inner.root))
+    }
+
+    #[staticmethod]
     pub fn mk_and(left: &PythonBdd, right: &PythonBdd) -> PythonBdd {
         PythonBdd::new(&left.root & &right.root)
     }

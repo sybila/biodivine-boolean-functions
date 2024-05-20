@@ -1,47 +1,64 @@
 import biodivine_boolean_functions as bbf
 from pyeda.inter import *
-import time
+from utils import run_bench
+
+"""
+This benchmark compares the performance of the logic table representations
+using a repeated substitution while increasing the variable count of the
+formula. 
+
+The operation starts with a formula 'x_0' and it iteratively 
+substitutes 'x_i' for '(x_i ^ x_{i+1})'', starting with i = 0. So in the
+end, we obtain a formula (x_0 ^ (x_1 ^ (x_2 ^ ... ( ^ x_n)))).
+
+This operation was chosen because it substitutes the variable for
+a formula that contains the variable itself, plus another, new variable.
+As such, it should be more complicated than basic operations on tables
+where the arity of the function does not change.
+"""
 
 def bench_subst_bbf(num_vars):
 	variable_names = [ f"x_{i}" for i in range(num_vars) ]
 	variables = [ bbf.Table.from_expression(bbf.Expression(f"x_{i}")) for i in range(num_vars) ]
-	table = bbf.Table.mk_xor(variables[0], variables[1])
-	for i in range(num_vars - 1):
-		if i == 0:
-			continue
+	table = variables[0]
+	for i in range(num_vars - 1):		
 		exp = bbf.Table.mk_xor(variables[i], variables[i+1])
 		table = table.substitute({ variable_names[i]: exp })
 	return table
 
 def bench_subst_pyeda(num_vars):
 	variables = [ ttvar(f"x_{i}") for i in range(num_vars) ]
-	table = variables[0] ^ variables[1]
-	for i in range(num_vars - 1):
-		if i == 0:
-			continue
+	table = variables[0]
+	for i in range(num_vars - 1):		
 		exp = variables[i] ^ variables[i+1]
 		table = table.compose({ variables[i]: exp })
 	return table
 
-REPETITIONS = 10
+header = [
+	"Var. count",
+	"BBF[avg]",
+	"PyEDA[avg]",
+	"BBF[dev]",
+	"PyEDA[dev]",
+	"BBF[times]",
+	"PyEDA[times]"
+]
+print("\t".join(header))
 
-print("size\tBBF\tPyEDA")
+for num_vars in range(2, 20):
+	
+	(bbf_avg, bbf_dev, bbf_times) = run_bench(lambda: bench_subst_bbf(num_vars))
+	(pyeda_avg, pyeda_dev, pyeda_times) = run_bench(lambda: bench_subst_pyeda(num_vars))
 
-for x in range(20):
-	if x < 5:
-		continue
-	num_vars = x
+	
+	row = [
+		str(num_vars),
+		str(bbf_avg),
+		str(pyeda_avg),
+		str(bbf_dev),
+		str(pyeda_dev),
+		str(bbf_times),
+		str(pyeda_times)
+	]
 
-	total_bbf = 0	
-	for _ in range(REPETITIONS):
-		start = time.perf_counter_ns()
-		bench_subst_bbf(num_vars)
-		total_bbf += time.perf_counter_ns() - start
-
-	total_pyeda = 0
-	for _ in range(REPETITIONS):
-		start = time.perf_counter_ns()
-		bench_subst_pyeda(num_vars)
-		total_pyeda += time.perf_counter_ns() - start
-
-	print(f"{num_vars}\t{int(total_bbf / REPETITIONS)}\t{int(total_pyeda / REPETITIONS)}")
+	print("\t".join(row))

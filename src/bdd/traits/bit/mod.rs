@@ -3,6 +3,7 @@ use biodivine_lib_bdd::Bdd as InnerBdd;
 use std::fmt::Debug;
 
 mod and;
+mod not;
 mod or;
 mod xor;
 

@@ -9,7 +9,7 @@ use crate::bindings::error::PythonExpressionError::UnknownVariableWhileEvaluatin
 use crate::expressions::{Expression as RustExpression, ExpressionNode};
 use crate::traits::{Evaluate, GatherLiterals, SemanticEq};
 
-#[pyclass(frozen)]
+#[pyclass(frozen, name = "Expression")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PythonExpression {
     root: RustExpression<String>,
@@ -163,7 +163,7 @@ impl PythonExpression {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("PythonExpression({})", self.__str__())
+        format!("PythonExpression(\"{}\")", self.__str__())
     }
 }
 

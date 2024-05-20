@@ -1,7 +1,7 @@
 pub use boolean_function::{BooleanFunction, BooleanPoint, BooleanValuation};
 pub use evaluate::Evaluate;
 pub use gather_literals::GatherLiterals;
-pub use operations::implication::Implication;
+pub use operations::{equality::Equality, implication::Implication};
 pub use power_set::PowerSet;
 pub use semantic_eq::SemanticEq;
 

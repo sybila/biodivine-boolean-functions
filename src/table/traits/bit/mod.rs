@@ -11,8 +11,8 @@ mod or;
 mod xor;
 
 fn bit_common<T: Debug + Clone + Ord, F: Fn(bool, bool) -> bool>(
-    me: TruthTable<T>,
-    other: TruthTable<T>,
+    me: &TruthTable<T>,
+    other: &TruthTable<T>,
     op: F,
 ) -> TruthTable<T> {
     let self_variables = me.gather_literals();

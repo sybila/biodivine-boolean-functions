@@ -7,6 +7,14 @@ impl<T: Debug + Clone + Ord> BitOr for TruthTable<T> {
     type Output = TruthTable<T>;
 
     fn bitor(self, other: Self) -> Self::Output {
+        bit_common(&self, &other, BitOr::bitor)
+    }
+}
+
+impl<T: Debug + Clone + Ord> BitOr for &TruthTable<T> {
+    type Output = TruthTable<T>;
+
+    fn bitor(self, other: Self) -> Self::Output {
         bit_common(self, other, BitOr::bitor)
     }
 }

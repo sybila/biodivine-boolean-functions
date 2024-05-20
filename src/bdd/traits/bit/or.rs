@@ -2,13 +2,27 @@ use crate::bdd::traits::bit::bit_common;
 use crate::bdd::Bdd;
 use biodivine_lib_bdd::Bdd as InnerBdd;
 use std::fmt::Debug;
-use std::ops::BitOr;
+use std::ops::{BitOr, BitOrAssign};
 
 impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitOr for Bdd<TLiteral> {
     type Output = Bdd<TLiteral>;
 
     fn bitor(self, rhs: Self) -> Self::Output {
+        bit_common(&self, &rhs, InnerBdd::or)
+    }
+}
+
+impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitOr for &Bdd<TLiteral> {
+    type Output = Bdd<TLiteral>;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
         bit_common(self, rhs, InnerBdd::or)
+    }
+}
+
+impl<TLiteral: Debug + Clone + Eq + Ord + 'static> BitOrAssign for Bdd<TLiteral> {
+    fn bitor_assign(&mut self, rhs: Self) {
+        *self = bit_common(self, &rhs, InnerBdd::or);
     }
 }
 

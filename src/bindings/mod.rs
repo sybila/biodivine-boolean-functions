@@ -1,7 +1,9 @@
+mod bdd;
 mod error;
 mod expression;
 mod table;
 
+use crate::bindings::bdd::PythonBdd;
 use crate::bindings::expression::PythonExpression;
 use crate::bindings::table::PythonTruthTable;
 use pyo3::prelude::*;
@@ -13,5 +15,6 @@ use pyo3::prelude::*;
 fn biodivine_boolean_functions(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonExpression>()?;
     m.add_class::<PythonTruthTable>()?;
+    m.add_class::<PythonBdd>()?;
     Ok(())
 }

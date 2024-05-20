@@ -13,6 +13,8 @@ ulimit -v $MEMORY_LIMIT
 # biodivine-boolean-functions and PyEDA
 # already installed.
 
+pip list > result_pip.txt
+
 python3 bench_expr_parser.py &> result_expr_parser.tsv
 python3 bench_expr_cnf.py &> result_expr_cnf.tsv
 
@@ -21,4 +23,4 @@ python3 bench_bdd_monotonicity.py &> result_bdd_monotonicity.tsv
 
 python3 bench_table_subst.py &> result_table_subst.tsv 
 
-zip -r results.zip *.tsv
+zip -r results.zip result_*

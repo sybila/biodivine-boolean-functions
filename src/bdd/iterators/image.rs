@@ -3,14 +3,14 @@ use biodivine_lib_bdd::Bdd;
 use biodivine_lib_bdd::BddValuation;
 
 pub struct ImageIterator {
-    domain_iterator: Box<dyn Iterator<Item = Vec<bool>>>,
+    domain_iterator: DomainIterator,
     bdd: Bdd,
 }
 
 impl ImageIterator {
     pub(crate) fn new(input_count: usize, bdd: &Bdd) -> Self {
         Self {
-            domain_iterator: Box::new(DomainIterator::from_count(input_count)),
+            domain_iterator: DomainIterator::from_count(input_count),
             bdd: bdd.clone(),
         }
     }

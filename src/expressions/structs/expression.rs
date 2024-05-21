@@ -87,6 +87,15 @@ impl<T: Debug + Clone + Eq + Ord> Expression<T> {
         }
     }
 
+    pub fn is_nnf(&self) -> bool {
+        match self.node() {
+            Literal(_) => true,
+            Constant(_) => false,
+            Not(e) => matches!(e.node(), Literal(..)),
+            And(es) | Or(es) => es.iter().all(|e| e.is_nnf()),
+        }
+    }
+
     // let rec cnfc (phi: formula_wi) : formula_wi
     // = match phi with
     // | FOr_wi phi1 phi2 → distr (cnfc phi1) (cnfc phi2)
@@ -228,6 +237,7 @@ pub mod tests {
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_nnf());
     }
 
     #[test]
@@ -238,16 +248,18 @@ pub mod tests {
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_nnf());
     }
 
     #[test]
-    fn test_to_nnn_3() {
+    fn test_to_nnf_3() {
         // Not (notA ∨ vB) ∨ Not (vB ∧ notC), (vA ∧ notB) ∨ (notB ∨ vC)
         let input = !(!var("a") | var("b")) | !(var("b") & !var("c"));
         let expected = (var("a") & !var("b")) | !var("b") | var("c");
         let actual = input.to_nnf();
 
         assert!(expected.semantic_eq(&actual));
+        assert!(actual.is_nnf());
     }
 
     #[test]

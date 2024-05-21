@@ -93,8 +93,8 @@ impl PythonExpression {
     }
 
     /// Variables not in the dictionary default to false.
-    pub fn evaluate(&self, literal_values: BTreeMap<String, bool>) -> PyResult<bool> {
-        Ok(self.root.evaluate(&literal_values))
+    pub fn evaluate_safe(&self, literal_values: BTreeMap<String, bool>) -> bool {
+        self.root.evaluate(&literal_values)
     }
 
     /// Variables not in the dictionary defaults to the passed `default_value` argument.
@@ -102,10 +102,9 @@ impl PythonExpression {
         &self,
         literal_values: BTreeMap<String, bool>,
         default_value: bool,
-    ) -> PyResult<bool> {
-        Ok(self
-            .root
-            .evaluate_with_default(&literal_values, default_value))
+    ) -> bool {
+        self.root
+            .evaluate_with_default(&literal_values, default_value)
     }
 
     pub fn gather_literals(&self) -> BTreeSet<String> {

@@ -172,3 +172,24 @@ impl PythonExpression {
         PythonExpression { root: expression }
     }
 }
+
+#[pyfunction]
+/// A utility function to quickly create a list of literal expressions, useful for constructing n_ary operators.
+pub fn vars(names: Vec<String>) -> Vec<PythonExpression> {
+    names
+        .into_iter()
+        .map(|name| Expression::from(ExpressionNode::Literal(name)).into())
+        .collect()
+}
+
+#[pyfunction]
+/// A utility function to quickly create a single literal expression.
+pub fn var(name: String) -> PythonExpression {
+    Expression::from(ExpressionNode::Literal(name.to_string())).into()
+}
+
+#[pyfunction]
+/// A utility function to quickly create a single constant expression.
+pub fn bool(value: bool) -> PythonExpression {
+    Expression::from(ExpressionNode::Constant(value)).into()
+}

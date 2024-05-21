@@ -17,5 +17,9 @@ fn biodivine_boolean_functions(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonExpression>()?;
     m.add_class::<PythonTruthTable>()?;
     m.add_class::<PythonBdd>()?;
+
+    m.add_function(wrap_pyfunction!(crate::bindings::expression::var, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::bindings::expression::vars, m)?)?;
+    m.add_function(wrap_pyfunction!(crate::bindings::expression::bool, m)?)?;
     Ok(())
 }

@@ -4,22 +4,22 @@ use crate::utils::row_index_to_bool_point;
 use std::fmt::Debug;
 
 pub struct SupportIterator {
-    outputs: Box<dyn Iterator<Item = usize>>,
+    outputs: std::vec::IntoIter<usize>,
     variable_count: usize,
 }
 
 impl<T: Debug + Clone + Ord> From<&TruthTable<T>> for SupportIterator {
     fn from(value: &TruthTable<T>) -> Self {
         Self {
-            outputs: Box::new(
-                value
-                    .outputs
-                    .clone()
-                    .into_iter()
-                    .enumerate()
-                    .filter(|(_row_index, output_is_true)| *output_is_true)
-                    .map(|(row_index, _output_is_true)| row_index),
-            ),
+            outputs: value
+                .outputs
+                .clone()
+                .into_iter()
+                .enumerate()
+                .filter(|(_row_index, output_is_true)| *output_is_true)
+                .map(|(row_index, _output_is_true)| row_index)
+                .collect::<Vec<_>>()
+                .into_iter(),
             variable_count: value.variable_count(),
         }
     }

@@ -9,7 +9,7 @@ use crate::utils::row_index_to_bool_point;
 #[cfg(feature = "csv")]
 pub mod csv;
 pub mod display_formatted;
-mod iterators;
+pub mod iterators;
 pub mod traits;
 mod utils;
 

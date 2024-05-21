@@ -6,7 +6,7 @@ use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
 
 use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
 
-mod iterators;
+pub mod iterators;
 mod traits;
 mod utils;
 

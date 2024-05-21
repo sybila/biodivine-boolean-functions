@@ -1,15 +1,21 @@
 pub use domain::PythonDomainIterator;
+pub use range_bdd::PythonBddRangeIterator;
 pub use range_expression::PythonExpressionRangeIterator;
 pub use range_table::PythonTableRangeIterator;
+pub use relation_bdd::PythonBddRelationIterator;
 pub use relation_expression::PythonExpressionRelationIterator;
 pub use relation_table::PythonTableRelationIterator;
+pub use support_bdd::PythonBddSupportIterator;
 pub use support_expression::PythonExpressionSupportIterator;
 pub use support_table::PythonTableSupportIterator;
 
 mod domain;
+mod range_bdd;
 mod range_expression;
 mod range_table;
+mod relation_bdd;
 mod relation_expression;
 mod relation_table;
+mod support_bdd;
 mod support_expression;
 mod support_table;

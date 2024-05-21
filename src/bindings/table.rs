@@ -52,8 +52,8 @@ impl PythonTruthTable {
     }
 
     /// Variables not in the dictionary default to false.
-    pub fn evaluate_safe(&self, literal_values: BTreeMap<String, bool>) -> PyResult<bool> {
-        Ok(self.root.evaluate(&literal_values))
+    pub fn evaluate_safe(&self, literal_values: BTreeMap<String, bool>) -> bool {
+        self.root.evaluate(&literal_values)
     }
 
     /// Variables not in the dictionary defaults to the passed `default_value` argument.
@@ -61,10 +61,9 @@ impl PythonTruthTable {
         &self,
         literal_values: BTreeMap<String, bool>,
         default_value: bool,
-    ) -> PyResult<bool> {
-        Ok(self
-            .root
-            .evaluate_with_default(&literal_values, default_value))
+    ) -> bool {
+        self.root
+            .evaluate_with_default(&literal_values, default_value)
     }
 
     pub fn semantic_eq(&self, other: &Self) -> bool {
@@ -113,6 +112,11 @@ impl PythonTruthTable {
     #[staticmethod]
     pub fn mk_xor(left: &Self, right: &Self) -> Self {
         PythonTruthTable::new(&left.root ^ &right.root)
+    }
+
+    #[staticmethod]
+    pub fn mk_not(left: &Self) -> Self {
+        PythonTruthTable::new(!&left.root)
     }
 
     fn substitute(&self, mapping: HashMap<String, Self>) -> Self {

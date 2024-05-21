@@ -1,6 +1,7 @@
 mod bdd;
 mod error;
 mod expression;
+mod iterators;
 mod table;
 
 use crate::bindings::bdd::PythonBdd;

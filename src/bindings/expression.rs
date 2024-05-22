@@ -2,6 +2,8 @@ use num_bigint::BigUint;
 use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
 
+use crate::bdd::Bdd;
+use crate::bindings::bdd::PythonBdd;
 use pyo3::prelude::{pyclass, pyfunction, pymethods, PyAny, PyAnyMethods, PyResult};
 use pyo3::Bound;
 
@@ -11,7 +13,9 @@ use crate::bindings::iterators::{
     PythonDomainIterator, PythonExpressionRangeIterator, PythonExpressionRelationIterator,
     PythonExpressionSupportIterator,
 };
+use crate::bindings::table::PythonTruthTable;
 use crate::expressions::{Expression as RustExpression, Expression, ExpressionNode};
+use crate::table::TruthTable;
 use crate::traits::{
     BooleanFunction, BooleanPoint, BooleanValuation, Evaluate, GatherLiterals, SemanticEq,
 };
@@ -150,6 +154,18 @@ impl PythonExpression {
     #[staticmethod]
     pub fn mk_not(expression: &PythonExpression) -> PythonExpression {
         Self::new(RustExpression::negate(&expression.root))
+    }
+
+    fn __invert__(&self) -> PythonExpression {
+        Self::mk_not(self)
+    }
+
+    fn __and__(&self, other: &PythonExpression) -> PythonExpression {
+        Self::mk_and_binary(self, other)
+    }
+
+    fn __or__(&self, other: &PythonExpression) -> PythonExpression {
+        Self::mk_or_binary(self, other)
     }
 
     #[staticmethod]
@@ -372,6 +388,30 @@ impl PythonExpression {
     /// `1` *at least* for those inputs where `other` outputs one.
     fn is_implied_by(&self, other: &Self) -> bool {
         self.root.is_implied_by(&other.root)
+    }
+
+    #[staticmethod]
+    pub fn from_table(table: &PythonTruthTable) -> Self {
+        let rust_table: TruthTable<String> = table.into();
+        let rust_expression: Expression<String> = rust_table.to_expression_trivial();
+
+        Self::new(rust_expression)
+    }
+
+    #[staticmethod]
+    pub fn from_bdd(bdd: &PythonBdd) -> Self {
+        let rust_table: Bdd<String> = bdd.into();
+        let rust_expression: Expression<String> = rust_table.into();
+
+        Self::new(rust_expression)
+    }
+
+    fn to_table(&self) -> PythonTruthTable {
+        PythonTruthTable::from_expression(self)
+    }
+
+    fn to_bdd(&self) -> PyResult<PythonBdd> {
+        PythonBdd::from_expression(self)
     }
 }
 

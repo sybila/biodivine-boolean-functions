@@ -1,6 +1,8 @@
 use num_bigint::BigUint;
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::bdd::Bdd;
+use crate::bindings::bdd::PythonBdd;
 use pyo3::PyResult;
 
 use crate::bindings::error::PythonExpressionError::UnknownVariableWhileEvaluating;
@@ -28,20 +30,20 @@ impl From<TruthTable<String>> for PythonTruthTable {
     }
 }
 
+impl From<PythonTruthTable> for TruthTable<String> {
+    fn from(value: PythonTruthTable) -> Self {
+        (&value).into()
+    }
+}
+
+impl From<&PythonTruthTable> for TruthTable<String> {
+    fn from(value: &PythonTruthTable) -> Self {
+        value.root.clone()
+    }
+}
+
 #[pyo3::pymethods]
 impl PythonTruthTable {
-    #[staticmethod]
-    pub fn from_expression(expression: &PythonExpression) -> Self {
-        let rust_expression: RustExpression<String> = expression.into();
-        let rust_table: TruthTable<String> = rust_expression.into();
-
-        Self::new(rust_table)
-    }
-
-    pub fn to_expression_trivial(&self) -> PythonExpression {
-        self.root.to_expression_trivial().into()
-    }
-
     pub fn to_string_formatted(
         &self,
         style: TableStyle,
@@ -320,6 +322,30 @@ impl PythonTruthTable {
     /// `1` *at least* for those inputs where `other` outputs one.
     fn is_implied_by(&self, other: &Self) -> bool {
         self.root.is_implied_by(&other.root)
+    }
+
+    #[staticmethod]
+    pub fn from_expression(expression: &PythonExpression) -> Self {
+        let rust_expression: RustExpression<String> = expression.into();
+        let rust_table: TruthTable<String> = rust_expression.into();
+
+        rust_table.into()
+    }
+
+    #[staticmethod]
+    pub fn from_bdd(expression: &PythonBdd) -> Self {
+        let rust_expression: Bdd<String> = expression.into();
+        let rust_table: TruthTable<String> = rust_expression.into();
+
+        rust_table.into()
+    }
+
+    pub fn to_expression(&self) -> PythonExpression {
+        PythonExpression::from_table(self)
+    }
+
+    pub fn to_bdd(&self) -> PyResult<PythonBdd> {
+        PythonBdd::from_table(self)
     }
 }
 

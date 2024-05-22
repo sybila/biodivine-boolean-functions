@@ -102,7 +102,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
         Ok(BddVariableSet::new_anonymous(num_vars))
     }
 
-    pub(crate) fn inner(&self) -> &InnerBdd {
+    pub fn inner(&self) -> &InnerBdd {
         &self.bdd
     }
 

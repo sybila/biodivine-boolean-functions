@@ -10,7 +10,9 @@ use crate::bindings::iterators::{
     PythonBddRangeIterator, PythonBddRelationIterator, PythonBddSupportIterator,
     PythonDomainIterator,
 };
+use crate::bindings::table::PythonTruthTable;
 use crate::expressions::Expression;
+use crate::table::TruthTable;
 use crate::traits::{BooleanFunction, BooleanPoint, BooleanValuation, Evaluate};
 
 #[pyclass(frozen, name = "Bdd")]
@@ -25,19 +27,20 @@ impl From<Bdd<String>> for PythonBdd {
     }
 }
 
+impl From<PythonBdd> for Bdd<String> {
+    fn from(value: PythonBdd) -> Self {
+        (&value).into()
+    }
+}
+
+impl From<&PythonBdd> for Bdd<String> {
+    fn from(value: &PythonBdd) -> Self {
+        value.root.clone()
+    }
+}
+
 #[pymethods]
 impl PythonBdd {
-    #[staticmethod]
-    pub fn from_expression(expression: &PythonExpression) -> PyResult<Self> {
-        let native: Expression<String> = expression.into();
-        match Bdd::try_from(native) {
-            Ok(bdd) => Ok(Self::new(bdd)),
-            Err(_e) => Err(PyRuntimeError::new_err(
-                "Conversion failed. Too many variables.",
-            )),
-        }
-    }
-
     #[staticmethod]
     pub fn mk_not(inner: &PythonBdd) -> PythonBdd {
         PythonBdd::new(!(&inner.root))
@@ -292,6 +295,36 @@ impl PythonBdd {
     /// `1` *at least* for those inputs where `other` outputs one.
     fn is_implied_by(&self, other: &Self) -> bool {
         self.root.is_implied_by(&other.root)
+    }
+
+    #[staticmethod]
+    pub fn from_expression(expression: &PythonExpression) -> PyResult<Self> {
+        let native: Expression<String> = expression.into();
+        match Bdd::try_from(native) {
+            Ok(bdd) => Ok(Self::new(bdd)),
+            Err(_e) => Err(PyRuntimeError::new_err(
+                "Conversion failed. Too many variables.",
+            )),
+        }
+    }
+
+    #[staticmethod]
+    pub fn from_table(table: &PythonTruthTable) -> PyResult<Self> {
+        let native: TruthTable<String> = table.into();
+        match Bdd::try_from(native) {
+            Ok(bdd) => Ok(Self::new(bdd)),
+            Err(_e) => Err(PyRuntimeError::new_err(
+                "Conversion failed. Too many variables.",
+            )),
+        }
+    }
+
+    pub fn to_expression(&self) -> PythonExpression {
+        PythonExpression::from_bdd(self)
+    }
+
+    pub fn to_table(&self) -> PythonTruthTable {
+        PythonTruthTable::from_bdd(self)
     }
 }
 

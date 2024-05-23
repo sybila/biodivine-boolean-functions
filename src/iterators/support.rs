@@ -1,3 +1,4 @@
+use crate::expressions::Expression;
 use crate::traits::{BooleanPoint, Evaluate, GatherLiterals};
 use crate::utils::{boolean_point_to_valuation, row_index_to_bool_point};
 use std::collections::BTreeSet;
@@ -5,15 +6,15 @@ use std::fmt::Debug;
 
 pub struct SupportIterator<T: Debug + Clone + Ord> {
     variables: BTreeSet<T>,
-    evaluatable: Box<dyn Evaluate<T>>,
+    evaluatable: Expression<T>,
     index: usize,
 }
 
 impl<T: Debug + Clone + Ord> SupportIterator<T> {
-    pub(crate) fn new(value: &(impl Evaluate<T> + GatherLiterals<T> + Clone + 'static)) -> Self {
+    pub(crate) fn new(value: &Expression<T>) -> Self {
         Self {
             variables: value.gather_literals(),
-            evaluatable: Box::from(value.clone()),
+            evaluatable: value.clone(),
             index: 0,
         }
     }

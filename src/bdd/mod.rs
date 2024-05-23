@@ -6,7 +6,7 @@ use biodivine_lib_bdd::{Bdd as InnerBdd, BddVariable, BddVariableSet};
 
 use crate::bdd::utils::{extend_bdd_variables, prune_bdd_variables};
 
-mod iterators;
+pub mod iterators;
 mod traits;
 mod utils;
 
@@ -102,7 +102,7 @@ impl<TLiteral: Debug + Clone + Eq + Ord> Bdd<TLiteral> {
         Ok(BddVariableSet::new_anonymous(num_vars))
     }
 
-    pub(crate) fn inner(&self) -> &InnerBdd {
+    pub fn inner(&self) -> &InnerBdd {
         &self.bdd
     }
 

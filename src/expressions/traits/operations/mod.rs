@@ -1,1 +1,2 @@
+mod equality;
 mod implication;
